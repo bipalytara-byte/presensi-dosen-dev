@@ -194,6 +194,20 @@ tr:last-child td{border-bottom:none}
     <div class="card" style="border:1.5px solid #85b7eb;background:#f7fbff">
       <div class="sec">Selesai mengajar</div>
       <div id="isel" style="font-size:13px;color:#333;margin-bottom:1rem;line-height:1.6"></div>
+      
+      <!-- Tambahan Form Alasan -->
+      <div class="field" id="wrap-alasan" style="margin-bottom:1.25rem; padding-top:1rem; border-top:1px dashed #b9d5f0">
+        <label style="color:#185fa5;font-weight:500">Keterangan / Alasan Selesai Awal (Opsional)</label>
+        <select id="alasan-sel" onchange="if(this.value==='Lainnya'){document.getElementById('alasan-txt').style.display='block';}else{document.getElementById('alasan-txt').style.display='none';}" style="border-color:#b9d5f0">
+          <option value="">— Selesai sesuai jadwal —</option>
+          <option value="Penugasan Mandiri">Penugasan Mandiri</option>
+          <option value="Project Based Learning (PBL)">Project Based Learning (PBL)</option>
+          <option value="Ujian / Kuis Selesai">Ujian / Kuis Selesai</option>
+          <option value="Lainnya">Lainnya...</option>
+        </select>
+        <input type="text" id="alasan-txt" placeholder="Tulis alasan singkat..." style="display:none;margin-top:8px;border-color:#b9d5f0"/>
+      </div>
+
       <button class="btn btn-blue" id="bsel" onclick="rekamSelesai()">Rekam selesai mengajar</button>
     </div>
   </div>
@@ -390,22 +404,18 @@ let currentUser=null; // { id, nama, mk[] }
 window.onload=function(){
   tick(); setInterval(tick,1000);
   
-  // FIX: Pulihkan status Admin dari localStorage
   if (localStorage.getItem('isAdmin') === 'true') {
     isAdmin = true;
     updAU();
   }
 
-  // Cek apakah sudah login sebelumnya (dari sessionStorage)
   var saved=sessionStorage.getItem('current_user');
   if(saved){
     try{
       currentUser=JSON.parse(saved);
-      // Muat data dulu, baru tampilkan app
       loadThenShow();
     }catch(e){ showLoginScreen(); }
   } else {
-    // Muat data dulu untuk isi dropdown login
     loadForLogin();
   }
 };
@@ -438,7 +448,6 @@ function showLoginScreen(){ document.getElementById('login-screen').classList.ad
 function hideLoginScreen(){ document.getElementById('login-screen').classList.remove('show'); }
 
 async function loadForLogin(){
-  // Muat data minimal untuk dropdown login
   try {
     var r=await get({action:'getDosen'});
     D=r.data||[];
@@ -466,7 +475,6 @@ function doLogin(){
   var did=sel.value;
   if(!did){errEl.textContent='Pilih nama terlebih dahulu.';return;}
   if(!pass){errEl.textContent='Masukkan password.';return;}
-  // Validasi password
   var correctPass=DOSEN_PASS[did];
   if(!correctPass||pass!==correctPass){
     errEl.textContent='❌ Password salah. Hubungi admin jika lupa password.';
@@ -488,7 +496,6 @@ function logout(){
   currentUser=null; actId=null; actJad=null;
   document.getElementById('csel').style.display='none';
   document.getElementById('resume-banner').style.display='none';
-  // Reset ke login screen
   loadForLogin();
 }
 
@@ -503,26 +510,22 @@ async function loadThenShow(){
     setSB('ok');
     updateUserUI();
     fillAll();
-    restoreSesi();   // ← Cek sesi aktif yang menggantung
+    restoreSesi();
   }catch(e){ setSB('er'); }
 }
 
 function updateUserUI(){
   if(!currentUser)return;
-  // Avatar: 2 huruf pertama nama
   var parts=currentUser.nama.split(' ');
   var init=(parts[0]?parts[0][0]:'')+(parts[1]?parts[1][0]:'');
   document.getElementById('user-avatar').textContent=init.toUpperCase();
   document.getElementById('user-name').textContent=currentUser.nama.split(',')[0];
-  // Info di form presensi
   var info=document.getElementById('login-info');
   info.textContent='Login sebagai: '+currentUser.nama;
   info.style.display='block';
-  // Info di form ganti
   var gi=document.getElementById('ganti-info');
   gi.textContent='Pengajuan atas nama: '+currentUser.nama;
   gi.style.display='block';
-  // Isi MK dropdown di ganti
   var gmk=document.getElementById('gmk');
   gmk.innerHTML='<option value="">— Pilih mata kuliah —</option>';
   (currentUser.mk||[]).forEach(function(m){
@@ -530,12 +533,10 @@ function updateUserUI(){
   });
 }
 
-// ── RESTORE SESI (FIX REFRESH: MEMBACA LANGSUNG DARI SHEET) ──
+// ── RESTORE SESI ──
 function restoreSesi(){
   if(!currentUser) return;
   var todayStr = new Date().toLocaleDateString('id-ID');
-  
-  // Cari data presensi milik dosen hari ini yang BELUM memiliki waktuSelesai
   var sesiGantung = P.find(function(p){ 
     return p.tanggal === todayStr && p.dosenId === currentUser.id && (!p.waktuSelesai || p.waktuSelesai === ""); 
   });
@@ -543,14 +544,10 @@ function restoreSesi(){
   if(sesiGantung) {
     actId = sesiGantung.id; 
     actJad = J.find(function(j){ return j.id === sesiGantung.jadwalId; });
-    
-    // Tampilkan banner resume
     var banner = document.getElementById('resume-banner');
     document.getElementById('resume-title').textContent = 'Sesi mengajar belum direkam selesai';
     document.getElementById('resume-info').textContent = sesiGantung.mk + (sesiGantung.kelas ? ' (' + sesiGantung.kelas + ')' : '') + ' · Mulai ' + sesiGantung.waktuHadir;
     banner.style.display = 'flex';
-    
-    // Tampilkan juga kartu selesai
     tampilKartuSelesai(sesiGantung, actJad);
   } else {
     document.getElementById('resume-banner').style.display = 'none';
@@ -686,7 +683,6 @@ async function rekam(){
     document.getElementById('resume-banner').style.display='none';
     tampilKartuSelesai(rec,jad);
     renderHari();
-    // Reset form
     document.getElementById('pj').innerHTML='<option value="">— Pilih jadwal —</option>';
     fillJadwalDosen();
     document.getElementById('pjam').value=''; document.getElementById('pruang').value='';
@@ -711,6 +707,18 @@ async function rekamSelesai(){
   var now=new Date();
   var ws=now.toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'});
   var st=stS(actJad?jStr(actJad.jamSelesai):'');
+
+  // FIX: Mengambil alasan selesai awal
+  var selAlasan = document.getElementById('alasan-sel').value;
+  var txtAlasan = document.getElementById('alasan-txt').value.trim();
+  var alasan = (selAlasan === 'Lainnya') ? txtAlasan : selAlasan;
+
+  // Jika ada alasan yg diisi, anggap valid meskipun waktunya lebih awal
+  if (alasan !== '') {
+    st.l = 'Selesai Awal (' + alasan + ')';
+    st.c = 'blue'; // Ubah ke biru agar laporan tidak menghitungnya sebagai pelanggaran
+  }
+
   var btn=document.getElementById('bsel'); btn.disabled=true; btn.textContent='Menyimpan...';
   setSB('sy');
   try{
@@ -721,6 +729,12 @@ async function rekamSelesai(){
     document.getElementById('csel').style.display='none';
     document.getElementById('resume-banner').style.display='none';
     renderHari(); actId=null; actJad=null;
+
+    // Reset form alasan
+    document.getElementById('alasan-sel').value='';
+    document.getElementById('alasan-txt').value='';
+    document.getElementById('alasan-txt').style.display='none';
+
     alert('✅ Selesai mengajar!\nWaktu: '+ws+'\nStatus: '+st.l);
   }catch(e){setSB('er');alert('Gagal: '+e.message);}
   btn.disabled=false; btn.textContent='Rekam selesai mengajar';
@@ -762,7 +776,6 @@ async function kirimGanti(){
 }
 function renderG(){
   var w=document.getElementById('lgw'),el=document.getElementById('lg');
-  // Tampilkan hanya milik user yang login
   var data=currentUser?G.filter(function(g){return g.dosenId===currentUser.id;}):G;
   if(!data.length){if(w)w.style.display='none';return;} w.style.display='block';
   el.innerHTML=data.slice().reverse().map(function(g){
@@ -963,7 +976,7 @@ function updPD(){for(var i=0;i<4;i++){var el=document.getElementById('d'+i);if(e
 function cekPin(){
   if(pinBuf===PIN){
     isAdmin=true;
-    localStorage.setItem('isAdmin', 'true'); // FIX: Simpan ke localStorage
+    localStorage.setItem('isAdmin', 'true'); 
     cm('mpin');
     updAU();
   } else {
@@ -974,7 +987,7 @@ function cekPin(){
 function logoutA(){
   if(!confirm('Keluar dari mode admin?'))return;
   isAdmin=false;
-  localStorage.removeItem('isAdmin'); // FIX: Hapus dari localStorage
+  localStorage.removeItem('isAdmin');
   updAU();
   document.querySelector('.tab').click();
 }
@@ -986,7 +999,6 @@ function updAU(){
 // ── HELPER ─────────────────────────────────────────────
 function fillAll(){
   fillJadwalDosen();
-  // Filter laporan
   var rd=document.getElementById('rd');if(rd){rd.innerHTML='<option value="all">Semua dosen</option>';D.forEach(function(d){var o=document.createElement('option');o.value=d.id;o.textContent=d.nama;rd.appendChild(o);});}
   var jfd=document.getElementById('jfd');if(jfd){jfd.innerHTML='<option value="all">Semua dosen</option>';D.forEach(function(d){var o=document.createElement('option');o.value=d.id;o.textContent=d.nama;jfd.appendChild(o);});}
   renderD();renderJ();renderHari();renderG();
