@@ -111,15 +111,27 @@ tr:last-child td{border-bottom:none}
   <div class="login-box">
     <div class="login-logo">📋</div>
     <div class="login-title">Presensi Dosen</div>
-    <div class="login-sub">Pilih nama kamu untuk melanjutkan</div>
+    <div class="login-sub">Masuk dengan akun yang diberikan</div>
     <div class="field">
       <label>Nama dosen</label>
       <select id="login-sel">
         <option value="">— Pilih nama —</option>
       </select>
     </div>
+    <div class="field">
+      <label>Password</label>
+      <div style="position:relative">
+        <input type="password" id="login-pass" placeholder="Masukkan password..."
+          onkeydown="if(event.key==='Enter') doLogin()"
+          style="padding-right:42px"/>
+        <button onclick="togglePass()" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);border:none;background:none;cursor:pointer;color:#888;font-size:14px" id="pass-eye">👁</button>
+      </div>
+    </div>
     <button class="btn btn-primary login-btn" onclick="doLogin()">Masuk →</button>
-    <div id="login-err" style="font-size:12px;color:#a32d2d;margin-top:8px;min-height:16px"></div>
+    <div id="login-err" style="font-size:12px;color:#a32d2d;margin-top:10px;min-height:16px;font-weight:500"></div>
+    <div style="font-size:11px;color:#aaa;margin-top:1rem;border-top:1px solid #f0f0ee;padding-top:1rem">
+      Password diberikan oleh admin. Hubungi admin jika lupa password.
+    </div>
   </div>
 </div>
 
@@ -339,9 +351,34 @@ tr:last-child td{border-bottom:none}
 <script>
 // ── CONFIG ─────────────────────────────────────────────
 const API  = 'https://script.google.com/macros/s/AKfycbwnmeKPbYa0uLaxbqUtuxA16qvr4BTHemaf0mPZ1bV7Fw7hJNCV2fSev0CFiBPpBRHlOw/exec';
-const PIN  = '1234';
+const PIN  = '5678'; // PIN admin
 const HARI = ['Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
-const SKEY = 'presensi_sesi'; // sessionStorage key untuk restore sesi
+const SKEY = 'presensi_sesi';
+
+// Password per dosen (id → password)
+const DOSEN_PASS = {
+  "d001": "QAH276",
+  "d002": "XCK025",
+  "d003": "AFQ525",
+  "d004": "VAU631",
+  "d005": "YIC086",
+  "d006": "USN935",
+  "d007": "VQW570",
+  "d008": "FHC212",
+  "d009": "QJJ229",
+  "d010": "QPE713",
+  "d011": "ZQO687",
+  "d012": "FAI229",
+  "d013": "WIR394",
+  "d014": "GGO258",
+  "d015": "KFZ500",
+  "d016": "CQU403",
+  "d017": "ZNZ807",
+  "d018": "RNG614",
+  "d019": "LYW251",
+  "d020": "XWH661",
+  "d021": "TOU503",
+};
 
 // ── STATE ──────────────────────────────────────────────
 let D=[],J=[],P=[],G=[];
@@ -408,15 +445,33 @@ async function loadForLogin(){
   } catch(e){ showLoginScreen(); }
 }
 
+function togglePass(){
+  var inp=document.getElementById('login-pass');
+  var eye=document.getElementById('pass-eye');
+  if(inp.type==='password'){inp.type='text';eye.textContent='🙈';}
+  else{inp.type='password';eye.textContent='👁';}
+}
+
 function doLogin(){
   var sel=document.getElementById('login-sel');
-  var did=sel.value;
+  var pass=document.getElementById('login-pass').value.trim();
   var errEl=document.getElementById('login-err');
-  if(!did){ errEl.textContent='Pilih nama terlebih dahulu.'; return; }
+  errEl.textContent='';
+  var did=sel.value;
+  if(!did){errEl.textContent='Pilih nama terlebih dahulu.';return;}
+  if(!pass){errEl.textContent='Masukkan password.';return;}
+  // Validasi password
+  var correctPass=DOSEN_PASS[did];
+  if(!correctPass||pass!==correctPass){
+    errEl.textContent='❌ Password salah. Hubungi admin jika lupa password.';
+    document.getElementById('login-pass').value='';
+    document.getElementById('login-pass').focus();
+    return;
+  }
   var dos=D.find(function(d){return d.id===did;});
-  if(!dos){ errEl.textContent='Dosen tidak ditemukan.'; return; }
+  if(!dos){errEl.textContent='Dosen tidak ditemukan.';return;}
   currentUser=dos;
-  sessionStorage.setItem('current_user', JSON.stringify(dos));
+  sessionStorage.setItem('current_user',JSON.stringify(dos));
   hideLoginScreen();
   loadThenShow();
 }
