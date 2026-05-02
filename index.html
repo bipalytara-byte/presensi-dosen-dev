@@ -102,6 +102,10 @@ tr:last-child td{border-bottom:none}
 
 /* DEV badge */
 .dev-badge{display:inline-block;background:#7c3aed;color:#fff;font-size:10px;padding:1px 6px;border-radius:4px;margin-left:6px;vertical-align:middle}
+
+/* SKURO PRODUCTION COPYRIGHT */
+.skuro-footer { text-align: center; font-size: 11px; color: #888; margin-top: 2rem; padding-top: 1rem; border-top: 1px solid #e5e5e3; line-height: 1.6; }
+.skuro-brand { font-weight: 600; color: #1a1a1a; cursor: pointer; text-decoration: underline; text-decoration-color: #ccc; text-underline-offset: 3px; }
 </style>
 </head>
 <body>
@@ -131,6 +135,12 @@ tr:last-child td{border-bottom:none}
     <div id="login-err" style="font-size:12px;color:#a32d2d;margin-top:10px;min-height:16px;font-weight:500"></div>
     <div style="font-size:11px;color:#aaa;margin-top:1rem;border-top:1px solid #f0f0ee;padding-top:1rem">
       Password diberikan oleh admin. Hubungi admin jika lupa password.
+    </div>
+    
+    <!-- TAMBAHAN COPYRIGHT SKURO DI LOGIN -->
+    <div style="font-size:10px;color:#aaa;margin-top:1.5rem;">
+      <b>Licensed and Trademarked by Skuro Production</b><br>
+      Aplikasi ini adalah properti independen.
     </div>
   </div>
 </div>
@@ -305,6 +315,13 @@ tr:last-child td{border-bottom:none}
   <div class="card"><div class="sec">Rekap per dosen</div><div id="bd"></div></div>
   <div class="card"><div class="sec">Detail riwayat</div><div id="det"><p class="empty">Belum ada data.</p></div></div>
 </div>
+
+<!-- FOOTER COPYRIGHT DALAM APLIKASI -->
+<div class="skuro-footer">
+  Dikembangkan secara independen oleh <span class="skuro-brand" onclick="document.getElementById('m-lisensi').classList.add('open')">Skuro Production</span>.<br>
+  &copy; 2026 Hak Cipta Dilindungi.
+</div>
+
 </div>
 
 <!-- MODAL PIN ADMIN -->
@@ -359,6 +376,21 @@ tr:last-child td{border-bottom:none}
     <div class="field"><label>Ruang</label><input type="text" id="jmr" placeholder="Ruang 301"/></div>
     <div class="field"><label>Semester</label><input type="text" id="jmsem" placeholder="Genap 2025/2026"/></div>
     <div class="mf"><button class="btn" onclick="cm('mjad')">Batal</button><button class="btn btn-primary" id="bsj" onclick="saveJad()">Simpan</button></div>
+  </div>
+</div>
+
+<!-- MODAL LISENSI SKURO PRODUCTION -->
+<div class="mo" id="m-lisensi">
+  <div class="md" style="max-width:400px; text-align:center;">
+    <div style="font-size:32px; margin-bottom:.5rem;">🛡️</div>
+    <div style="font-size:16px; font-weight:600; margin-bottom:4px; color:#1a1a1a;">Hak Kekayaan Intelektual</div>
+    <div style="font-size:13px; color:#555; text-align:left; line-height:1.6; background:#f5f5f3; padding:16px; border-radius:12px; margin-bottom:1.5rem; border:1px solid #e5e5e3;">
+      Aplikasi presensi ini sepenuhnya dikembangkan dan dimiliki secara independen oleh <b>Skuro Production</b>.<br><br>
+      Sistem ini <b>bukan</b> merupakan produk hibah, proyek berbayar, atau aset milik institusi/kampus. Meskipun pengembangan dibantu oleh teknologi AI, seluruh arsitektur logika dan pemikiran kreatif adalah murni dari pengembang.<br><br>
+      <b>Licensed and Trademark by Skuro Production.</b><br>
+      Segala bentuk modifikasi, penggandaan, atau penggunaan aplikasi ini di luar ketentuan harus atas seizin Skuro Production.
+    </div>
+    <button class="btn btn-primary" style="width:100%" onclick="cm('m-lisensi')">Saya Mengerti</button>
   </div>
 </div>
 
