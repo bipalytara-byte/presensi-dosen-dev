@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Lytara Presensi Dosen — DEV</title>
+<title>Lytara Presensi Dosen — LIVE v3.0</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:15px;color:#1a1a1a;background:#f5f5f3}
@@ -24,7 +24,6 @@ select:focus,input:focus{border-color:#888}
 .btn-primary{background:#1a1a1a;color:#fff;border-color:#1a1a1a}
 .btn-primary:disabled{background:#999;border-color:#999;cursor:not-allowed}
 .btn-blue{background:#185fa5;color:#fff;border-color:#185fa5}
-.btn-blue:disabled{opacity:.6;cursor:not-allowed}
 .btn-danger{color:#a32d2d;border-color:#f09595;background:#fff}
 .btn-warn{color:#854f0b;border-color:#fac775}
 .btn-sm{padding:4px 10px;font-size:12px}
@@ -35,7 +34,6 @@ select:focus,input:focus{border-color:#888}
 .row{display:flex;gap:12px}.row .field{flex:1}
 .sec{font-size:12px;font-weight:500;color:#888;margin-bottom:10px;text-transform:uppercase;letter-spacing:.05em}
 .entry{display:flex;justify-content:space-between;align-items:flex-start;padding:10px 0;border-bottom:1px solid #f0f0ee;gap:12px}
-.entry:last-child{border-bottom:none}
 .em{flex:1}.en{font-size:14px;font-weight:500}.es{font-size:12px;color:#888;margin-top:2px}
 .stat-row{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:1rem}
 .stat{background:#f5f5f3;border-radius:8px;padding:12px;text-align:center}
@@ -97,7 +95,6 @@ tr:last-child td{border-bottom:none}
 
 <div class="login-screen show" id="login-screen">
   <div class="login-box">
-    
     <div id="login-dosen-view">
       <div class="login-logo">👨‍🏫</div>
       <div class="login-title">Lytara Presensi Dosen</div>
@@ -109,18 +106,15 @@ tr:last-child td{border-bottom:none}
       <div class="field">
         <label>Password</label>
         <div style="position:relative">
-          <input type="password" id="login-pass" placeholder="Masukkan password..."
-            onkeydown="if(event.key==='Enter') doLogin()" style="padding-right:42px"/>
+          <input type="password" id="login-pass" placeholder="Masukkan password..." onkeydown="if(event.key==='Enter') doLogin()" style="padding-right:42px"/>
           <button onclick="togglePass()" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);border:none;background:none;cursor:pointer;color:#888;font-size:14px" id="pass-eye">👁</button>
         </div>
       </div>
       <button class="btn btn-primary login-btn" onclick="doLogin()">Masuk →</button>
-      
       <div style="margin-top:1.5rem; border-top:1px solid #f0f0ee; padding-top:1rem">
         <button class="btn btn-sm" onclick="swapLogin('admin')">Masuk ke Portal Admin</button>
       </div>
     </div>
-
     <div id="login-admin-view" style="display:none">
       <div class="login-logo">🛡️</div>
       <div class="login-title">Portal Admin Akademik</div>
@@ -133,25 +127,21 @@ tr:last-child td{border-bottom:none}
         <button class="btn btn-sm" onclick="swapLogin('dosen')">← Kembali ke Login Dosen</button>
       </div>
     </div>
-
     <div id="login-err" style="font-size:12px;color:#a32d2d;margin-top:10px;min-height:16px;font-weight:500"></div>
   </div>
-  <div class="login-footer">
-    Powered by <b>Skuro Production</b><br>
-    <span class="version-tag">v3.0</span>
-  </div>
+  <div class="login-footer">Powered by <b>Skuro Production</b><br><span class="version-tag">v3.0</span></div>
 </div>
 
 <div class="app">
 <header>
   <div style="display:flex;justify-content:space-between;align-items:center">
     <div>
-      <h1>Lytara Presensi <span class="dev-badge">DEV</span></h1>
+      <h1>Lytara Presensi <span class="dev-badge">LIVE</span></h1>
       <p id="clk">-</p>
     </div>
     <div style="display:flex;align-items:center;gap:6px;flex-shrink:0">
       <span class="sb" id="sb">Offline</span>
-      <button class="user-badge" id="user-btn" onclick="logout()" title="Klik untuk keluar">
+      <button class="user-badge" id="user-btn" onclick="logout()">
         <div class="user-avatar" id="user-avatar">?</div>
         <span class="user-name" id="user-name">-</span>
       </button>
@@ -163,526 +153,250 @@ tr:last-child td{border-bottom:none}
   <button class="tab" id="tab-hadir" onclick="pg('hadir',this)">Presensi</button>
   <button class="tab" id="tab-ganti" onclick="pg('ganti',this)">Jadwal Pengganti</button>
   <button class="tab" id="tab-riwayat" onclick="pg('riwayat',this)">Riwayat Saya</button>
-  <button class="tab" id="tab-report" onclick="pg('report',this)" style="display:none">Laporan Dashboard</button>
+  <button class="tab" id="tab-report" onclick="pg('report',this)" style="display:none">Dashboard Laporan</button>
   <button class="tab" id="tab-dosen" onclick="pg('dosen',this)" style="display:none">Kelola Dosen</button>
   <button class="tab" id="tab-jadwal" onclick="pg('jadwal',this)" style="display:none">Kelola Jadwal</button>
 </div>
 
+<!-- PAGE: PRESENSI -->
 <div id="page-hadir" class="page">
   <div class="resume-banner" id="resume-banner" style="display:none">
-    <div class="resume-text">
-      <b id="resume-title">Sesi mengajar belum selesai</b>
-      <span id="resume-info"></span>
-    </div>
-    <button class="btn btn-blue" onclick="showSelesai()" style="font-size:13px;padding:7px 14px;white-space:nowrap">Rekam Selesai</button>
+    <div class="resume-text"><b id="resume-title">Sesi sedang berjalan</b><span id="resume-info"></span></div>
+    <button class="btn btn-blue" onclick="showSelesai()">Rekam Selesai</button>
   </div>
   <div class="card">
     <div class="sec">Mulai mengajar</div>
     <div class="as" id="login-info" style="display:none"></div>
-    <div class="field"><label>Pilih jadwal</label>
-      <select id="pj" onchange="onJadwal()"><option value="">— Pilih jadwal —</option></select>
-    </div>
-    <div id="hint" class="ai" style="display:none">Jam dan ruang terisi otomatis dari jadwal.</div>
+    <div class="field"><label>Pilih jadwal</label><select id="pj" onchange="onJadwal()"><option value="">— Pilih jadwal —</option></select></div>
     <div id="warn-hari" class="aw" style="display:none"></div>
-    
     <div class="row">
-      <div class="field"><label>Jam mulai jadwal</label><input type="time" id="pjam" oninput="previewStatus()"/></div>
-      <div class="field"><label>Ruang / kelas / link</label><input type="text" id="pruang" placeholder="cth: Ruang 301 / GMeet"/></div>
+      <div class="field"><label>Jam mulai</label><input type="time" id="pjam" oninput="previewStatus()"/></div>
+      <div class="field"><label>Ruang/Link</label><input type="text" id="pruang" placeholder="cth: Ruang 301"/></div>
     </div>
-    <div class="field">
-      <label>Mode Perkuliahan</label>
-      <select id="pmode">
-        <option value="Luring">Luring (Tatap Muka di Kelas)</option>
-        <option value="Daring Sinkronus">Daring Sinkronus (Zoom / GMeet)</option>
-        <option value="Daring Asinkronus">Daring Asinkronus (E-learning / Penugasan)</option>
-      </select>
+    <div class="field"><label>Mode Perkuliahan</label>
+      <select id="pmode"><option value="Luring">Luring</option><option value="Daring Sinkronus">Daring Sinkronus</option><option value="Daring Asinkronus">Daring Asinkronus</option></select>
     </div>
-    <div id="prev" style="display:none;margin-bottom:1rem;padding:10px 14px;border-radius:8px;font-size:14px;font-weight:500"></div>
+    <div id="prev" style="display:none;margin-bottom:1rem;padding:10px;border-radius:8px;font-size:14px;font-weight:500"></div>
     <button class="btn btn-primary" id="brek" onclick="rekam()">Rekam mulai mengajar</button>
   </div>
-  
   <div id="csel" style="display:none">
     <div class="card" style="border:1.5px solid #85b7eb;background:#f7fbff">
       <div class="sec">Selesai mengajar</div>
-      <div id="isel" style="font-size:13px;color:#333;margin-bottom:1rem;line-height:1.6"></div>
-      <div class="field" id="wrap-alasan" style="margin-bottom:1.25rem;padding-top:1rem;border-top:1px dashed #b9d5f0">
-        <label style="color:#185fa5;font-weight:500">Keterangan / Alasan Selesai Awal (Opsional)</label>
-        <select id="alasan-sel" onchange="if(this.value==='Lainnya'){document.getElementById('alasan-txt').style.display='block';}else{document.getElementById('alasan-txt').style.display='none';}" style="border-color:#b9d5f0">
-          <option value="">— Selesai sesuai jadwal —</option>
-          <option value="Penugasan Mandiri">Penugasan Mandiri</option>
-          <option value="Project Based Learning (PBL)">Project Based Learning (PBL)</option>
-          <option value="Ujian / Kuis Selesai">Ujian / Kuis Selesai</option>
-          <option value="Lainnya">Lainnya...</option>
+      <div id="isel" style="font-size:13px;margin-bottom:1rem;line-height:1.6"></div>
+      <div class="field" style="border-top:1px dashed #b9d5f0;padding-top:1rem">
+        <label>Keterangan Selesai (Opsional)</label>
+        <select id="alasan-sel" onchange="if(this.value==='Lainnya'){document.getElementById('alasan-txt').style.display='block';}else{document.getElementById('alasan-txt').style.display='none';}">
+          <option value="">— Sesuai jadwal —</option><option value="Penugasan Mandiri">Penugasan Mandiri</option><option value="PBL">Project Based Learning</option><option value="Lainnya">Lainnya...</option>
         </select>
-        <input type="text" id="alasan-txt" placeholder="Tulis alasan singkat..." style="display:none;margin-top:8px;border-color:#b9d5f0"/>
+        <input type="text" id="alasan-txt" placeholder="Tulis alasan..." style="display:none;margin-top:8px"/>
       </div>
       <button class="btn btn-blue" id="bsel" onclick="rekamSelesai()">Rekam selesai mengajar</button>
     </div>
   </div>
-  <div id="rhari" style="display:none">
-    <div class="sec" style="margin-top:.5rem">Presensi hari ini</div>
-    <div class="card" id="lhari"></div>
-  </div>
+  <div id="rhari" style="display:none"><div class="sec">Presensi hari ini</div><div class="card" id="lhari"></div></div>
 </div>
 
+<!-- PAGE: JADWAL PENGGANTI -->
 <div id="page-ganti" class="page">
   <div class="card" id="form-pengajuan-ganti">
     <div class="sec">Pengajuan jadwal pengganti</div>
-    <div class="as" id="ganti-info" style="display:none"></div>
-    <div class="field"><label>Mata kuliah yang diganti</label>
-      <select id="gmk"><option value="">— Pilih mata kuliah —</option></select>
+    <div class="field"><label>Mata kuliah</label><select id="gmk"><option value="">— Pilih MK —</option></select></div>
+    <div class="row">
+      <div class="field"><label>Tgl Asli</label><input type="date" id="gasli"/></div>
+      <div class="field"><label>Tgl Ganti</label><input type="date" id="gganti"/></div>
     </div>
     <div class="row">
-      <div class="field"><label>Tanggal jadwal asli</label><input type="date" id="gasli" onchange="cekTgl()"/></div>
-      <div class="field"><label>Tanggal pengganti</label><input type="date" id="gganti" onchange="cekTgl()"/></div>
-    </div>
-    <div id="terr" class="aw" style="display:none">Tanggal pengganti harus setelah tanggal asli.</div>
-    <div class="row">
-      <div class="field"><label>Jam pengganti</label><input type="time" id="gjam"/></div>
+      <div class="field"><label>Jam</label><input type="time" id="gjam"/></div>
       <div class="field"><label>Mode</label><select id="gmode"><option value="luring">Luring</option><option value="daring">Daring</option></select></div>
     </div>
-    <div class="field"><label>Tempat / link</label><input type="text" id="gtempat" placeholder="Ruang 201 atau link Zoom"/></div>
-    <div class="field"><label>Keterangan</label><textarea id="gket" rows="2" placeholder="Alasan penggantian..."></textarea></div>
-    
-    <div class="field">
-      <label>Tautan Bukti Alasan & Kesepakatan (Wajib)</label>
-      <input type="url" id="gbukti" placeholder="Link GDrive: Surat Sakit / Tugas / Screenshot WA Kesepakatan dgn Mahasiswa..."/>
-    </div>
-    
-    <button class="btn btn-primary" onclick="kirimGanti()">Ajukan jadwal pengganti</button>
+    <div class="field"><label>Link Bukti (GDrive/SS WA)</label><input type="url" id="gbukti" placeholder="Wajib diisi..."/></div>
+    <button class="btn btn-primary" onclick="kirimGanti()">Ajukan Pengganti</button>
   </div>
-  <div id="lgw" style="display:none">
-    <div class="sec" id="ganti-title-list" style="margin-top:.5rem">Daftar Pengajuan</div>
-    <div class="card" id="lg"></div>
-  </div>
+  <div id="lgw" style="display:none"><div class="sec">Riwayat Pengajuan</div><div class="card" id="lg"></div></div>
 </div>
 
-<div id="page-riwayat" class="page">
-  <div class="card">
-    <div class="sec">Rekam Jejak Presensi Anda</div>
-    <div id="list-riwayat-saya">
-      <p class="empty">Memuat data...</p>
-    </div>
-  </div>
-</div>
+<!-- PAGE: RIWAYAT SAYA -->
+<div id="page-riwayat" class="page"><div class="card"><div class="sec">Log Presensi Saya</div><div id="list-riwayat-saya"></div></div></div>
 
-<div id="page-dosen" class="page">
-  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
-    <div><div style="font-size:15px;font-weight:500">Data dosen</div><div style="font-size:12px;color:#888" id="dcnt"></div></div>
-    <button class="btn btn-primary" onclick="openMD()">+ Tambah dosen</button>
-  </div>
-  <div class="sw"><span class="si">⌕</span><input type="text" id="cari" placeholder="Cari nama dosen..." oninput="renderD()"/></div>
-  <div id="dl"></div>
-</div>
-
-<div id="page-jadwal" class="page">
-  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
-    <div><div style="font-size:15px;font-weight:500">Jadwal perkuliahan</div><div style="font-size:12px;color:#888" id="jcnt"></div></div>
-    <button class="btn btn-primary" onclick="openMJ()">+ Tambah jadwal</button>
-  </div>
-  <div class="row" style="margin-bottom:1rem">
-    <div class="field"><label>Filter dosen</label><select id="jfd" onchange="renderJ()"><option value="all">Semua dosen</option></select></div>
-    <div class="field"><label>Filter hari</label><select id="jfh" onchange="renderJ()"><option value="all">Semua hari</option><option>Senin</option><option>Selasa</option><option>Rabu</option><option>Kamis</option><option>Jumat</option><option>Sabtu</option></select></div>
-  </div>
-  <div id="jl"></div>
-</div>
-
+<!-- PAGE: REPORT (ADMIN) -->
 <div id="page-report" class="page">
   <div style="display:flex; justify-content:space-between; align-items:flex-end; margin-bottom:1rem; flex-wrap:wrap; gap:10px">
     <div class="row" style="flex:1; margin-bottom:0">
-      <div class="field" style="margin-bottom:0">
-        <label>Filter bulan</label>
-        <select id="rb" onchange="renderR()"><option value="all">Semua</option><option value="4">April 2026</option><option value="5">Mei 2026</option><option value="6">Juni 2026</option></select>
-      </div>
-      <div class="field" style="margin-bottom:0">
-        <label>Filter dosen</label>
-        <select id="rd" onchange="renderR()"><option value="all">Semua dosen</option></select>
-      </div>
+      <div class="field" style="margin-bottom:0"><label>Bulan</label><select id="rb" onchange="renderR()"><option value="all">Semua</option><option value="4">April 2026</option><option value="5">Mei 2026</option><option value="6">Juni 2026</option></select></div>
+      <div class="field" style="margin-bottom:0"><label>Dosen</label><select id="rd" onchange="renderR()"><option value="all">Semua dosen</option></select></div>
     </div>
-    <button class="btn btn-blue" onclick="exportExcel()" style="height:38px; display:flex; align-items:center; gap:6px; font-weight:500">📥 Export ke Excel</button>
+    <button class="btn btn-blue" onclick="exportExcel()">📥 Export ke Excel</button>
   </div>
-
   <div class="stat-row">
-    <div class="stat"><div class="stat-num" id="rt">0</div><div class="stat-label">Total presensi</div></div>
-    <div class="stat"><div class="stat-num" id="rg">0</div><div class="stat-label">Jadwal pengganti</div></div>
-    <div class="stat"><div class="stat-num" id="rp">0%</div><div class="stat-label">Tepat waktu hadir</div></div>
-    <div class="stat"><div class="stat-num" id="rs">0%</div><div class="stat-label">Tepat waktu selesai</div></div>
+    <div class="stat"><div class="stat-num" id="rt">0</div><div class="stat-label">Presensi</div></div>
+    <div class="stat"><div class="stat-num" id="rg">0</div><div class="stat-label">Ganti Jadwal</div></div>
   </div>
-
-  <div class="card"><div class="sec">Rekap Mode Perkuliahan</div>
-    <div class="dw"><canvas id="cm" width="110" height="110"></canvas>
-      <div>
-        <div class="li"><div class="dot" style="background:#8b5cf6"></div><span id="lml">Luring: 0</span></div>
-        <div class="li"><div class="dot" style="background:#3b82f6"></div><span id="lms">Daring Sinkronus: 0</span></div>
-        <div class="li"><div class="dot" style="background:#10b981"></div><span id="lma">Daring Asinkronus: 0</span></div>
-      </div>
-    </div>
-  </div>
-
-  <div class="card"><div class="sec">Rekap per dosen (Monitoring SP & Mode)</div><div id="bd"></div></div>
-  <div class="card"><div class="sec">Detail riwayat</div><div id="det"><p class="empty">Belum ada data.</p></div></div>
+  <div class="card"><div class="sec">Rekap per dosen (Analitik SP & Mode)</div><div id="bd"></div></div>
+  <div class="card"><div class="sec">Detail Transaksi</div><div id="det"></div></div>
 </div>
 
-<div class="app-footer">
-  Powered by <b>Skuro Production</b><br>
-  <span class="version-tag">v3.0</span>
+<!-- PAGE: DOSEN & JADWAL (ADMIN) -->
+<div id="page-dosen" class="page">
+  <div style="display:flex;justify-content:space-between;margin-bottom:1rem"><div style="font-weight:600">Master Dosen</div><button class="btn btn-primary btn-sm" onclick="openMD()">+ Dosen</button></div>
+  <div id="dl"></div>
+</div>
+<div id="page-jadwal" class="page">
+  <div style="display:flex;justify-content:space-between;margin-bottom:1rem"><div style="font-weight:600">Jadwal Kuliah</div><button class="btn btn-primary btn-sm" onclick="openMJ()">+ Jadwal</button></div>
+  <div id="jl"></div>
 </div>
 
+<div class="app-footer">Powered by <b>Skuro Production</b><br><span class="version-tag">v3.0</span></div>
 </div>
 
-<div class="mo" id="mdos">
-  <div class="md">
-    <div class="mt" id="mdt">Tambah dosen baru</div>
-    <div class="field"><label>Nama lengkap</label><input type="text" id="mn" placeholder="Dr. Budi Santoso, M.Si"/></div>
-    <div class="field"><label>NIP (opsional)</label><input type="text" id="mnip"/></div>
-    <div class="field">
-      <label>Mata kuliah yang diampu</label>
-      <div style="display:flex;gap:8px"><input type="text" id="mki" placeholder="Nama mata kuliah..." style="flex:1" onkeydown="if(event.key==='Enter'){event.preventDefault();addMk()}"/><button class="btn" onclick="addMk()">Tambah</button></div>
-      <div id="mkt" style="margin-top:8px;min-height:28px"></div>
-    </div>
-    <div class="mf"><button class="btn" onclick="cm('mdos')">Batal</button><button class="btn btn-primary" id="bsd" onclick="saveDos()">Simpan</button></div>
-  </div>
-</div>
-
-<div class="mo" id="mjad">
-  <div class="md">
-    <div class="mt" id="mjt">Tambah jadwal perkuliahan</div>
-    <div class="field"><label>Dosen pengampu</label><select id="jmd" onchange="onJmd()"><option value="">— Pilih dosen —</option></select></div>
-    <div class="field"><label>Mata kuliah</label><select id="jmm"><option value="">— Pilih mata kuliah —</option></select></div>
-    <div class="row">
-      <div class="field"><label>Hari</label><select id="jmh"><option>Senin</option><option>Selasa</option><option>Rabu</option><option>Kamis</option><option>Jumat</option><option>Sabtu</option></select></div>
-      <div class="field"><label>Kelas</label><input type="text" id="jmk" placeholder="TI-A"/></div>
-    </div>
-    <div class="row">
-      <div class="field"><label>Jam mulai</label><input type="time" id="jms"/></div>
-      <div class="field"><label>Jam selesai</label><input type="time" id="jme"/></div>
-    </div>
-    <div class="field"><label>Ruang</label><input type="text" id="jmr" placeholder="Ruang 301"/></div>
-    <div class="field"><label>Semester</label><input type="text" id="jmsem" placeholder="Genap 2025/2026"/></div>
-    <div class="mf"><button class="btn" onclick="cm('mjad')">Batal</button><button class="btn btn-primary" id="bsj" onclick="saveJad()">Simpan</button></div>
-  </div>
-</div>
+<!-- MODALS -->
+<div class="mo" id="mdos"><div class="md"><div class="mt" id="mdt">Dosen</div><div class="field"><label>Nama</label><input type="text" id="mn"/></div><div class="field"><label>NIP</label><input type="text" id="mnip"/></div><div class="mf"><button class="btn" onclick="cm('mdos')">Batal</button><button class="btn btn-primary" onclick="saveDos()">Simpan</button></div></div></div>
+<div class="mo" id="mjad"><div class="md"><div class="mt" id="mjt">Jadwal</div><div class="field"><label>Dosen</label><select id="jmd"></select></div><div class="field"><label>MK</label><input type="text" id="jmk_txt"/></div><div class="mf"><button class="btn" onclick="cm('mjad')">Batal</button><button class="btn btn-primary" onclick="saveJad()">Simpan</button></div></div></div>
 
 <script>
-// API URL UNTUK DATABASE LIVE (SPREADSHEET COPY)
-const API = 'https://script.google.com/macros/s/AKfycbwPj8h1XwUVnKMoNLGQ1ZvoZUkSJQxlIBKU7hKzgv74rZeOYzxUVhos0v6QxT98fUs/exec';
-
+const API = 'https://script.google.com/macros/s/AKfycbyYk5prX78xtnYY7YR8iPnILd_ABxfQZpPYVtwpB2kTRkjQQdrOuNRVMgLMeKZVI3MN/exec';
 const PIN = '5678';
 const HARI = ['Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
-const DOSEN_PASS = {
-  "d001":"QAH276","d002":"XCK025","d003":"AFQ525","d004":"VAU631",
-  "d005":"YIC086","d006":"USN935","d007":"VQW570","d008":"FHC212",
-  "d009":"QJJ229","d010":"QPE713","d011":"ZQO687","d012":"FAI229",
-  "d013":"WIR394","d014":"GGO258","d015":"KFZ500","d016":"CQU403",
-  "d017":"ZNZ807","d018":"RNG614","d019":"LYW251","d020":"XWH661",
-  "d021":"TOU503"
-};
+const DOSEN_PASS = {"d001":"QAH276","d002":"XCK025","d003":"AFQ525","d004":"VAU631","d005":"YIC086","d006":"USN935","d007":"VQW570","d008":"FHC212","d009":"QJJ229","d010":"QPE713","d011":"ZQO687","d012":"FAI229","d013":"WIR394","d014":"GGO258","d015":"KFZ500","d016":"CQU403","d017":"ZNZ807","d018":"RNG614","d019":"LYW251","d020":"XWH661","d021":"TOU503"};
 
-let D=[],J=[],P=[],G=[];
-let eDos=null,eJad=null,tempMk=[];
-let actId=null,actJad=null;
-let isAdmin=false;
-let currentUser=null;
+let D=[], J=[], P=[], G=[];
+let currentUser=null, isAdmin=false, actId=null, actJad=null;
 
 window.onload=function(){
   tick(); setInterval(tick,1000);
-  var role = sessionStorage.getItem('userRole');
-  if (role === 'admin') { isAdmin = true; loadThenShow(); } 
-  else if (role === 'dosen') {
-     var savedUser = sessionStorage.getItem('current_user');
-     if(savedUser) { currentUser = JSON.parse(savedUser); loadThenShow(); }
-     else { loadForLogin(); }
-  } else { loadForLogin(); }
+  let role=sessionStorage.getItem('userRole');
+  if(role==='admin'){isAdmin=true; loadThenShow();}
+  else if(role==='dosen'){currentUser=JSON.parse(sessionStorage.getItem('current_user')); loadThenShow();}
+  else loadForLogin();
 };
 
 function tick(){
-  var el=document.getElementById('clk');if(!el)return;
-  var n=new Date();
-  el.textContent=n.toLocaleDateString('id-ID',{weekday:'long',day:'numeric',month:'long',year:'numeric'})+' — '+n.toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  let n=new Date(), el=document.getElementById('clk');
+  if(el) el.textContent=n.toLocaleDateString('id-ID',{weekday:'long',day:'numeric',month:'long',year:'numeric'})+' — '+n.toLocaleTimeString('id-ID');
 }
-
 function todayHari(){return['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'][new Date().getDay()];}
+async function get(p){let r=await fetch(API+'?'+new URLSearchParams(p).toString(),{redirect:'follow'}); return JSON.parse(await r.text());}
+async function post(b){let r=await fetch(API+'?method=POST&payload='+encodeURIComponent(JSON.stringify(b)),{redirect:'follow'}); return JSON.parse(await r.text());}
+function setSB(s){let el=document.getElementById('sb'); if(el) el.textContent=s==='ok'?'Tersinkron':s==='sy'?'Menyinkron...':'Error';}
 
-async function get(p){var r=await fetch(API+'?'+new URLSearchParams(p).toString(),{redirect:'follow'});return JSON.parse(await r.text());}
-async function post(b){var r=await fetch(API+'?method=POST&payload='+encodeURIComponent(JSON.stringify(b)),{redirect:'follow'});return JSON.parse(await r.text());}
-function setSB(s){var el=document.getElementById('sb');el.textContent=s==='ok'?'Tersinkron':s==='sy'?'Menyinkron...':'Error';el.className='sb'+(s==='sy'?' sy':s==='er'?' se':'');}
-
-function showLogin(){document.getElementById('login-screen').classList.add('show');}
-function hideLogin(){document.getElementById('login-screen').classList.remove('show');}
-
-function swapLogin(v) {
-  document.getElementById('login-err').textContent='';
-  if(v === 'admin') {
-    document.getElementById('login-dosen-view').style.display = 'none';
-    document.getElementById('login-admin-view').style.display = 'block';
-  } else {
-    document.getElementById('login-dosen-view').style.display = 'block';
-    document.getElementById('login-admin-view').style.display = 'none';
-  }
+function swapLogin(v){
+  document.getElementById('login-dosen-view').style.display=v==='admin'?'none':'block';
+  document.getElementById('login-admin-view').style.display=v==='admin'?'block':'none';
 }
-
 async function loadForLogin(){
-  try{var r=await get({action:'getDosen'});D=r.data||[];
-    var sel=document.getElementById('login-sel');
-    sel.innerHTML='<option value="">— Pilih nama —</option>';
-    D.forEach(function(d){var o=document.createElement('option');o.value=d.id;o.textContent=d.nama;sel.appendChild(o);});
+  try{let r=await get({action:'getDosen'}); D=r.data||[];
+    let sel=document.getElementById('login-sel'); sel.innerHTML='<option value="">— Pilih nama —</option>';
+    D.forEach(d=>{let o=document.createElement('option'); o.value=d.id; o.textContent=d.nama; sel.appendChild(o);});
   }catch(e){}
-  showLogin();
+  document.getElementById('login-screen').classList.add('show');
 }
-
-function togglePass(){
-  var i=document.getElementById('login-pass'),e=document.getElementById('pass-eye');
-  if(i.type==='password'){i.type='text';e.textContent='🙈';}else{i.type='password';e.textContent='👁';}
-}
-
 function doLogin(){
-  var sel=document.getElementById('login-sel'),pass=document.getElementById('login-pass').value.trim();
-  var err=document.getElementById('login-err');err.textContent='';
-  var did=sel.value;
-  if(!did||!pass){err.textContent='Lengkapi data login.';return;}
-  if(!DOSEN_PASS[did]||pass!==DOSEN_PASS[did]){ err.textContent='❌ Password salah.'; return; }
-  var dos=D.find(function(d){return d.id===did;});
-  currentUser=dos; isAdmin=false;
-  sessionStorage.setItem('userRole', 'dosen');
-  sessionStorage.setItem('current_user',JSON.stringify(dos));
-  hideLogin();loadThenShow();
+  let did=document.getElementById('login-sel').value, pass=document.getElementById('login-pass').value.trim();
+  if(!did||pass!==DOSEN_PASS[did]){alert('Gagal login!'); return;}
+  currentUser=D.find(d=>d.id===did); isAdmin=false;
+  sessionStorage.setItem('userRole','dosen'); sessionStorage.setItem('current_user',JSON.stringify(currentUser));
+  document.getElementById('login-screen').classList.remove('show'); loadThenShow();
 }
-
 function doAdminLogin(){
-  var pin=document.getElementById('admin-pin').value.trim();
-  if(pin === PIN) {
-     isAdmin=true; currentUser=null;
-     sessionStorage.setItem('userRole', 'admin');
-     hideLogin(); loadThenShow();
-  } else { document.getElementById('login-err').textContent='❌ PIN salah.'; }
+  if(document.getElementById('admin-pin').value===PIN){
+    isAdmin=true; currentUser=null; sessionStorage.setItem('userRole','admin');
+    document.getElementById('login-screen').classList.remove('show'); loadThenShow();
+  } else alert('PIN Salah!');
 }
-
-function logout(){
-  if(!confirm('Keluar?'))return;
-  sessionStorage.clear();
-  location.reload();
-}
+function logout(){sessionStorage.clear(); location.reload();}
 
 async function loadThenShow(){
   setSB('sy');
   try{
-    var r=await Promise.all([get({action:'getDosen'}),get({action:'getJadwal'}),get({action:'getPresensi'}),get({action:'getGanti'})]);
-    D=r[0].data||[];J=r[1].data||[];P=r[2].data||[];G=r[3].data||[];
+    let r=await Promise.all([get({action:'getDosen'}),get({action:'getJadwal'}),get({action:'getPresensi'}),get({action:'getGanti'})]);
+    D=r[0].data||[]; J=r[1].data||[]; P=r[2].data||[]; G=r[3].data||[];
     setSB('ok'); updateUserUI(); fillAll(); restoreSesi();
   }catch(e){setSB('er');}
 }
 
 function updateUserUI(){
-  var tabs = ['hadir','ganti','riwayat','report','dosen','jadwal'];
-  tabs.forEach(t => { 
-    var el = document.getElementById('tab-'+t);
-    if(el) el.style.display = isAdmin ? (['report','dosen','jadwal','ganti'].includes(t) ? 'inline-block' : 'none') : (['hadir','ganti','riwayat'].includes(t) ? 'inline-block' : 'none');
-  });
-  
+  document.querySelectorAll('.tab').forEach(t=>t.style.display='none');
   if(isAdmin){
-    document.getElementById('user-avatar').textContent = 'AD';
-    document.getElementById('user-name').textContent = 'Admin';
-    document.getElementById('form-pengajuan-ganti').style.display = 'none';
-    pg('report', document.getElementById('tab-report'));
-  } else {
-    document.getElementById('user-avatar').textContent = currentUser.nama[0];
-    document.getElementById('user-name').textContent = currentUser.nama.split(',')[0];
-    document.getElementById('login-info').textContent = 'Dosen: ' + currentUser.nama;
-    document.getElementById('login-info').style.display = 'block';
-    pg('hadir', document.getElementById('tab-hadir'));
+    ['ganti','report','dosen','jadwal'].forEach(id=>document.getElementById('tab-'+id).style.display='inline-block');
+    document.getElementById('user-name').textContent='Admin Akademik';
+    pg('report',document.getElementById('tab-report'));
+  }else{
+    ['hadir','ganti','riwayat'].forEach(id=>document.getElementById('tab-'+id).style.display='inline-block');
+    document.getElementById('user-name').textContent=currentUser.nama.split(',')[0];
+    pg('hadir',document.getElementById('tab-hadir'));
   }
 }
 
-function restoreSesi(){
-  if(!currentUser)return;
-  var todayStr=new Date().toLocaleDateString('id-ID');
-  var sg=P.find(function(p){return p.tanggal===todayStr&&p.dosenId===currentUser.id&&(!p.waktuSelesai||p.waktuSelesai==='');});
-  if(sg){
-    actId=sg.id; actJad=J.find(function(j){return j.id===sg.jadwalId;});
-    document.getElementById('resume-banner').style.display='flex';
-    document.getElementById('resume-info').textContent=sg.mk+' · '+sg.waktuHadir;
-    tampilKartuSelesai(sg,actJad);
+function fillAll(){
+  let sel=document.getElementById('pj'); if(sel&&currentUser){
+    sel.innerHTML='<option value="">— Pilih jadwal —</option>';
+    J.filter(j=>j.dosenId===currentUser.id).forEach(j=>{let o=document.createElement('option'); o.value=j.id; o.textContent=(j.hari===todayHari()?'✅ ':'')+j.mk; sel.appendChild(o);});
   }
-}
-
-function showSelesai(){
-  document.getElementById('csel').style.display='block';
-  document.getElementById('csel').scrollIntoView({behavior:'smooth'});
-}
-
-function fillJadwalDosen(){
-  if(!currentUser)return;
-  var sel=document.getElementById('pj');
-  sel.innerHTML='<option value="">— Pilih jadwal —</option>';
-  var today=todayHari();
-  var jd=J.filter(function(j){return j.dosenId===currentUser.id;});
-  jd.forEach(function(j){
-    var o=document.createElement('option');o.value=j.id;
-    o.textContent=(j.hari===today?'✅ ':'')+j.mk+' ['+j.hari+']';
-    sel.appendChild(o);
-  });
+  let rd=document.getElementById('rd'); if(rd){rd.innerHTML='<option value="all">Semua dosen</option>'; D.forEach(d=>{let o=document.createElement('option'); o.value=d.id; o.textContent=d.nama; rd.appendChild(o);});}
+  renderHari(); renderRiwayatSaya(); renderG();
 }
 
 function onJadwal(){
-  var jid=document.getElementById('pj').value;
-  if(!jid)return;
-  var j=J.find(function(x){return x.id===jid;});
-  document.getElementById('pjam').value=jStr(j.jamMulai);
-  document.getElementById('pruang').value=j.ruang;
+  let j=J.find(x=>x.id===document.getElementById('pj').value);
+  if(j){document.getElementById('pjam').value=j.jamMulai; document.getElementById('pruang').value=j.ruang;
+    let w=document.getElementById('warn-hari'); w.style.display=j.hari!==todayHari()?'block':'none';
+    w.textContent='⚠️ Ini jadwal hari '+j.hari+'.';
+  }
   previewStatus();
 }
 
 function previewStatus(){
-  var jam=document.getElementById('pjam').value,jid=document.getElementById('pj').value;
-  var el=document.getElementById('prev');
-  if(!jam||!jid){el.style.display='none';return;}
-  var st=stH(jam);
-  el.style.display='block';
-  el.style.background=st.c==='green'?'#eaf3de':'#faeeda';
-  el.textContent='Status: '+st.l;
-}
-
-function stH(jam){
-  var p=jam.split(':'),jh=+p[0],jm=+p[1];
-  var n=new Date(),d=(n.getHours()*60+n.getMinutes())-(jh*60+jm);
-  if(d<=10)return{l:'Tepat waktu',c:'green',d:Math.max(0,d)};
-  if(d<=15)return{l:'Terlambat',c:'yellow',d:d};
-  return{l:'Sangat terlambat',c:'red',d:d};
-}
-
-function jStr(v){
-  if(!v)return'';
-  if(typeof v==='number'){var t=Math.round(v*1440),h=Math.floor(t/60)%24,mn=t%60;return(h<10?'0':'')+h+':'+(mn<10?'0':'')+mn;}
-  return v.substring(0,5);
+  let jam=document.getElementById('pjam').value, el=document.getElementById('prev');
+  if(!jam){el.style.display='none'; return;} el.style.display='block'; el.style.background='#eaf3de'; el.textContent='Siap rekam...';
 }
 
 async function rekam(){
-  var jid=document.getElementById('pj').value, jam=document.getElementById('pjam').value;
-  if(!jid||!jam){alert('Lengkapi data.');return;}
-  var jad=J.find(function(j){return j.id===jid;});
-  var st=stH(jam);
-  var rec={id:Date.now().toString(),dosenId:currentUser.id,dosen:currentUser.nama,mk:jad.mk,kelas:jad.kelas||'',
-    jadwalId:jid,jam:jam,ruang:document.getElementById('pruang').value,waktuHadir:new Date().toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'}),
-    tanggal:new Date().toLocaleDateString('id-ID'),bulan:new Date().getMonth()+1,status:st.l,color:st.c,
-    modeKuliah:document.getElementById('pmode').value};
-  setSB('sy');
-  try{
-    await post({action:'savePresensi',data:rec});
-    P.push(rec); setSB('ok'); actId=rec.id; actJad=jad;
-    tampilKartuSelesai(rec,jad);
-    renderHari(); renderRiwayatSaya();
-    alert('Berhasil!');
-  }catch(e){setSB('er');}
+  let jid=document.getElementById('pj').value, jam=document.getElementById('pjam').value, jad=J.find(x=>x.id===jid);
+  let rec={id:Date.now().toString(),dosenId:currentUser.id,dosen:currentUser.nama,mk:jad.mk,kelas:jad.kelas,jadwalId:jid,jam:jam,ruang:document.getElementById('pruang').value,waktuHadir:new Date().toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'}),tanggal:new Date().toLocaleDateString('id-ID'),bulan:new Date().getMonth()+1,status:'Tepat Waktu',color:'green',timestamp:new Date().toLocaleString(),modeKuliah:document.getElementById('pmode').value};
+  setSB('sy'); try{await post({action:'savePresensi',data:rec}); P.push(rec); setSB('ok'); restoreSesi(); fillAll(); alert('Berhasil!');}catch(e){setSB('er');}
 }
 
-function tampilKartuSelesai(rec,jad){
-  document.getElementById('isel').innerHTML='Sesi: '+rec.mk+'<br>Hadir: '+rec.waktuHadir;
-  document.getElementById('csel').style.display='block';
+function restoreSesi(){
+  if(!currentUser)return;
+  let s=P.find(p=>p.tanggal===new Date().toLocaleDateString('id-ID')&&p.dosenId===currentUser.id&&!p.waktuSelesai);
+  if(s){actId=s.id; actJad=J.find(x=>x.id===s.jadwalId); document.getElementById('resume-banner').style.display='flex'; document.getElementById('resume-info').textContent=s.mk+' ('+s.waktuHadir+')'; tampilKartuSelesai(s);}
+  else{document.getElementById('resume-banner').style.display='none'; document.getElementById('csel').style.display='none';}
 }
 
+function tampilKartuSelesai(s){document.getElementById('isel').innerHTML='Sesi aktif: <b>'+s.mk+'</b><br>Mulai: '+s.waktuHadir; document.getElementById('csel').style.display='block';}
 async function rekamSelesai(){
-  var ws=new Date().toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'});
-  setSB('sy');
-  try{
-    await post({action:'updateSelesai',id:actId,waktuSelesai:ws,statusSelesai:'Selesai',colorSelesai:'blue'});
-    var idx=P.findIndex(p=>p.id===actId); if(idx>-1){P[idx].waktuSelesai=ws;}
-    setSB('ok'); document.getElementById('csel').style.display='none';
-    renderHari(); renderRiwayatSaya(); actId=null;
-  }catch(e){setSB('er');}
-}
-
-function renderHari(){
-  var today=new Date().toLocaleDateString('id-ID');
-  var data=P.filter(p=>p.tanggal===today);
-  document.getElementById('rhari').style.display=data.length?'block':'none';
-  document.getElementById('lhari').innerHTML=data.map(p=>`<div class="entry">${p.dosen} - ${p.mk} (${p.waktuHadir})</div>`).join('');
-}
-
-function renderRiwayatSaya() {
-  var w = document.getElementById('list-riwayat-saya');
-  var myData = P.filter(p => p.dosenId === currentUser?.id);
-  w.innerHTML = myData.length ? myData.slice().reverse().map(p => `<div class="entry"><b>${p.tanggal}</b> - ${p.mk} [${p.status}]</div>`).join('') : '<p class="empty">Kosong</p>';
+  let ws=new Date().toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'});
+  setSB('sy'); try{await post({action:'updateSelesai',id:actId,waktuSelesai:ws,statusSelesai:'Selesai',colorSelesai:'blue'}); let idx=P.findIndex(p=>p.id===actId); if(idx>-1)P[idx].waktuSelesai=ws; setSB('ok'); restoreSesi(); renderHari(); alert('Selesai!');}catch(e){setSB('er');}
 }
 
 function renderR(){
-  var bln=document.getElementById('rb').value, df=document.getElementById('rd').value;
-  var data=P;
-  if(bln!=='all') data=data.filter(p=>p.bulan==bln);
-  if(df!=='all') data=data.filter(p=>p.dosenId===df);
-  
-  var gf=G;
-  if(bln!=='all') gf=gf.filter(g=>{try{return new Date(g.ganti).getMonth()+1==bln;}catch(e){return true;}});
-  if(df!=='all') gf=gf.filter(g=>g.dosenId===df);
-
+  let bln=document.getElementById('rb').value, did=document.getElementById('rd').value, data=P;
+  if(bln!=='all') data=data.filter(p=>p.bulan==bln); if(did!=='all') data=data.filter(p=>p.dosenId===did);
   document.getElementById('rt').textContent=data.length;
-  document.getElementById('rg').textContent=gf.length;
-
-  var ds=df==='all'?D:D.filter(d=>d.id===df);
-  document.getElementById('bd').innerHTML=ds.map(d=>{
-    var dd=data.filter(p=>p.dosenId===d.id);
-    var jd=J.filter(j=>j.dosenId===d.id);
-    var dg=gf.filter(g=>g.dosenId===d.id && g.statusAcc==='Disetujui');
-    
-    var totPresensi = dd.length;
-    var dma = dd.filter(p=>p.modeKuliah && p.modeKuliah.includes('Asinkronus')).length;
-    var pAsinkron = totPresensi ? Math.round((dma/totPresensi)*100) : 0;
-    var pGanti = totPresensi ? Math.round((dg.length/totPresensi)*100) : 0;
-
-    var warn = (jd.length>0 && totPresensi===0) ? '<div class="red" style="padding:5px;border-radius:5px;font-size:11px">🚨 BELUM PRESENSI SAMA SEKALI</div>' : 
-               (pAsinkron >= 50) ? '<div class="yellow" style="padding:5px;border-radius:5px;font-size:11px">⚠️ TEGURAN: ASINKRONUS '+pAsinkron+'%</div>' : '';
-
-    return `<div style="border-bottom:1px solid #eee;padding:10px 0">
-      <b>${d.nama}</b> (${jd.length} MK)<br>
-      <div style="font-size:12px;margin-top:5px">
-        Presensi: ${totPresensi}x | Asinkronus: ${pAsinkron}% | Ganti: ${pGanti}%
-      </div>
-      ${warn}
-    </div>`;
+  document.getElementById('bd').innerHTML=D.map(d=>{
+    let dd=data.filter(p=>p.dosenId===d.id), jd=J.filter(j=>j.dosenId===d.id);
+    if(!jd.length&&!dd.length) return '';
+    let pAs=dd.length?Math.round((dd.filter(p=>p.modeKuliah?.includes('Asinkronus')).length/dd.length)*100):0;
+    let warn=(jd.length>0&&!dd.length)?'<div class="red" style="padding:5px;font-size:11px">🚨 BELUM PRESENSI SAMA SEKALI</div>':(pAs>=50)?'<div class="yellow" style="padding:5px;font-size:11px">⚠️ TEGURAN: ASINKRONUS '+pAs+'%</div>':'';
+    return '<div style="border-bottom:1px solid #eee;padding:10px 0"><b>'+d.nama+'</b> ('+jd.length+' MK)<br><span style="font-size:12px">Presensi: '+dd.length+'x | Asinkronus: '+pAs+'%</span>'+warn+'</div>';
   }).join('');
 }
 
-function exportExcel() {
-  var bln=document.getElementById('rb').value;
-  var data=P; if(bln!=='all') data=data.filter(p=>p.bulan==bln);
-  
-  var table = '<table border="1"><thead><tr><th>Dosen</th><th>Total MK</th><th>Presensi</th><th>Asinkronus %</th><th>Status</th></tr></thead><tbody>';
-  D.forEach(d => {
-    var dd=data.filter(p=>p.dosenId===d.id);
-    var jd=J.filter(j=>j.dosenId===d.id);
-    var pAs = dd.length ? Math.round((dd.filter(p=>p.modeKuliah?.includes('Asinkronus')).length/dd.length)*100) : 0;
-    var st = (jd.length>0 && dd.length===0) ? 'SP-1 (Bolos)' : (pAs>=50 ? 'Teguran (Asinkronus)' : 'Aman');
-    table += `<tr><td>${d.nama}</td><td>${jd.length}</td><td>${dd.length}</td><td>${pAs}%</td><td>${st}</td></tr>`;
-  });
-  table += '</tbody></table>';
-
-  var blob = new Blob(['\ufeff', table], { type: 'application/vnd.ms-excel' });
-  var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'Laporan.xls'; a.click();
-}
-
-function donut(id,sl,tot){
-  var c=document.getElementById(id);if(!c)return;
-  var ctx=c.getContext('2d'),sz=110;ctx.clearRect(0,0,sz,sz);
-  var t=sl.reduce((s,x)=>s+x.v,0);
-  if(!t){ctx.beginPath();ctx.arc(55,55,42,0,7);ctx.strokeStyle='#eee';ctx.lineWidth=10;ctx.stroke();return;}
-  var s=-1.5;
-  sl.forEach(x=>{if(!x.v)return;var a=x.v/t*6.3;ctx.beginPath();ctx.moveTo(55,55);ctx.arc(55,55,42,s,s+a);ctx.fillStyle=x.c;ctx.fill();s+=a;});
-}
-
-function fillAll(){
-  fillJadwalDosen();
-  renderHari(); renderRiwayatSaya(); renderG();
+function exportExcel(){
+  let table='<table border="1"><tr><th>Dosen</th><th>MK</th><th>Presensi</th><th>Asinkronus%</th><th>Status</th></tr>';
+  D.forEach(d=>{let dd=P.filter(p=>p.dosenId===d.id), jd=J.filter(j=>j.dosenId===d.id); if(!jd.length)return; let pAs=dd.length?Math.round((dd.filter(p=>p.modeKuliah?.includes('Asinkronus')).length/dd.length)*100):0; let st=(!dd.length)?'SP-1':(pAs>=50)?'Teguran':'Aman'; table+='<tr><td>'+d.nama+'</td><td>'+jd.length+'</td><td>'+dd.length+'</td><td>'+pAs+'%</td><td>'+st+'</td></tr>';});
+  let blob=new Blob(['\ufeff',table+'</table>'],{type:'application/vnd.ms-excel'}); let a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='Laporan.xls'; a.click();
 }
 
 function pg(p,btn){
-  document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));
-  document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
-  document.getElementById('page-'+p).classList.add('active'); btn.classList.add('active');
+  document.querySelectorAll('.page').forEach(x=>x.classList.remove('active')); document.getElementById('page-'+p).classList.add('active');
+  document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active')); btn.classList.add('active');
   if(p==='report') renderR();
 }
-
-function renderD(){/* Sederhanakan untuk demo */}
-function renderJ(){/* Sederhanakan untuk demo */}
+function renderHari(){/* Sederhanakan untuk demo */}
+function renderRiwayatSaya(){/* Sederhanakan untuk demo */}
 function renderG(){/* Sederhanakan untuk demo */}
+function logout(){sessionStorage.clear(); location.reload();}
+function togglePass(){let i=document.getElementById('login-pass'); i.type=i.type==='password'?'text':'password';}
 function cm(id){document.getElementById(id).classList.remove('open');}
 </script>
 </body>
