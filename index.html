@@ -1063,7 +1063,6 @@ function parseTanggal(str) {
   return 0;
 }
 
-// Menentukan Hari apa saja yang ada di rentang tanggal
 function getHariInRange(start, end) {
   var H = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
   if (!start && !end) return ['Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
@@ -1072,7 +1071,7 @@ function getHariInRange(start, end) {
   var eDate = end ? new Date(end + 'T00:00:00') : new Date(start + 'T00:00:00');
   
   var diff = Math.floor((eDate - sDate) / (1000 * 60 * 60 * 24));
-  if (diff >= 6) return H; // Kalau rentang >= 7 hari, otomatis semua hari masuk
+  if (diff >= 6) return H; 
   
   var res = [];
   var curr = new Date(sDate);
@@ -1082,6 +1081,41 @@ function getHariInRange(start, end) {
     curr.setDate(curr.getDate() + 1);
   }
   return res;
+}
+
+// FITUR KHUSUS WK I: Tutup Paksa Sesi
+async function tutupPaksa(id) {
+  // Token rahasia khusus Pak Anggi
+  var TOKEN_WKI = '1990'; 
+  
+  var inputToken = prompt('🛡️ OTORISASI DIBUTUHKAN:\nMasukkan Token Rahasia WK I untuk menutup paksa sesi ini:');
+  
+  if (inputToken === null) return; 
+  
+  if (inputToken !== TOKEN_WKI) {
+    alert('❌ Akses Ditolak!\nToken salah. Anda tidak memiliki izin untuk melakukan tindakan ini.');
+    return;
+  }
+  
+  if (!confirm('Token Benar. Lanjutkan menutup paksa sesi ini?')) return;
+  
+  setSB('sy');
+  try {
+    var ws = 'Ditutup Admin'; 
+    var stl = 'Selesai Paksa'; 
+    var stc = 'red'; 
+    
+    await post({action:'updateSelesai', id:id, waktuSelesai:ws, statusSelesai:stl, colorSelesai:stc});
+    
+    var idx = P.findIndex(function(p){ return p.id === id; });
+    if(idx > -1) { P[idx].waktuSelesai = ws; P[idx].statusSelesai = stl; P[idx].colorSelesai = stc; }
+    
+    setSB('ok');
+    renderR(); 
+    alert('✅ Sesi berhasil ditutup paksa oleh WK I.');
+  } catch(e) {
+    setSB('er'); alert('Gagal: ' + e.message);
+  }
 }
 
 function renderR(){
@@ -1220,7 +1254,18 @@ function renderR(){
   document.getElementById('det').innerHTML=!data.length?'<p class="empty">Belum ada data.</p>':data.slice().reverse().map(function(p){
     var jt=jStr(p.jam)||p.jam;
     var md=p.modeKuliah||'Luring';
-    var sb=p.waktuSelesai?'<span class="badge '+(p.colorSelesai==='blue'?'green':p.colorSelesai==='red'?'red':'yellow')+'" style="font-size:11px">'+p.statusSelesai+'</span>':'<span style="font-size:11px;color:#aaa">Selesai belum direkam</span>';
+    var sb='';
+    
+    if(p.waktuSelesai) {
+      sb='<span class="badge '+(p.colorSelesai==='blue'?'green':p.colorSelesai==='red'?'red':'yellow')+'" style="font-size:11px">'+p.statusSelesai+'</span>';
+    } else {
+      sb='<span style="font-size:11px;color:#aaa">Selesai belum direkam</span>';
+      // Hanya tampilkan tombol jika yang login adalah admin
+      if(isAdmin) {
+        sb += '<button class="btn btn-sm btn-danger" style="padding:2px 8px; font-size:10px; margin-left:8px" onclick="tutupPaksa(\''+p.id+'\')">Tutup Paksa</button>';
+      }
+    }
+    
     return '<div class="entry"><div class="em"><div class="en">'+p.dosen+'</div><div class="es">'+p.mk+(p.kelas?' · '+p.kelas:'')+' · '+p.ruang+' <span class="badge mode-badge" style="font-size:10px; margin-left:4px">'+md+'</span> · '+p.tanggal+'</div><div class="es" style="margin-top:4px;display:flex;gap:6px;flex-wrap:wrap;align-items:center"><span>Jadwal: <b>'+jt+'</b></span><span>Hadir: <b>'+p.waktuHadir+'</b></span><span class="badge '+p.color+'" style="font-size:11px">'+p.status+(p.diff>0?' (+'+p.diff+' mnt)':'')+'</span>'+(p.waktuSelesai?'<span>Selesai: <b>'+p.waktuSelesai+'</b></span>':'')+sb+'</div></div></div>';
   }).join('');
 }
