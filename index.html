@@ -1251,23 +1251,41 @@ function renderR(){
   document.getElementById('tp-count').textContent = totalPelanggaran;
   document.getElementById('pelanggaran-banner').style.display = totalPelanggaran > 0 ? 'block' : 'none';
 
-  document.getElementById('det').innerHTML=!data.length?'<p class="empty">Belum ada data.</p>':data.slice().reverse().map(function(p){
-    var jt=jStr(p.jam)||p.jam;
-    var md=p.modeKuliah||'Luring';
-    var sb='';
-    
-    if(p.waktuSelesai) {
-      sb='<span class="badge '+(p.colorSelesai==='blue'?'green':p.colorSelesai==='red'?'red':'yellow')+'" style="font-size:11px">'+p.statusSelesai+'</span>';
-    } else {
-      sb='<span style="font-size:11px;color:#aaa">Selesai belum direkam</span>';
-      // Hanya tampilkan tombol jika yang login adalah admin
-      if(isAdmin) {
-        sb += '<button class="btn btn-sm btn-danger" style="padding:2px 8px; font-size:10px; margin-left:8px" onclick="tutupPaksa(\''+p.id+'\')">Tutup Paksa</button>';
-      }
+  // MENGELOMPOKKAN DETAIL RIWAYAT BERDASARKAN TANGGAL
+  var groupedData = {};
+  data.slice().reverse().forEach(function(p) {
+    if(!groupedData[p.tanggal]) groupedData[p.tanggal] = [];
+    groupedData[p.tanggal].push(p);
+  });
+
+  var detHtml = '';
+  if(Object.keys(groupedData).length === 0) {
+    detHtml = '<p class="empty">Belum ada data pada rentang tanggal ini.</p>';
+  } else {
+    for(var tgl in groupedData) {
+      // Header Tanggal
+      detHtml += '<div style="margin-top:1.5rem; margin-bottom:10px; padding-bottom:6px; border-bottom:2px solid #e5e5e3; font-weight:600; color:#1a1a1a; font-size:14px; display:flex; align-items:center; gap:8px;"><span>📅</span> Tanggal: ' + tgl + '</div>';
+      
+      // Isi data per tanggal
+      detHtml += groupedData[tgl].map(function(p) {
+        var jt=jStr(p.jam)||p.jam;
+        var md=p.modeKuliah||'Luring';
+        var sb='';
+        
+        if(p.waktuSelesai) {
+          sb='<span class="badge '+(p.colorSelesai==='blue'?'green':p.colorSelesai==='red'?'red':'yellow')+'" style="font-size:11px">'+p.statusSelesai+'</span>';
+        } else {
+          sb='<span style="font-size:11px;color:#aaa">Selesai belum direkam</span>';
+          if(isAdmin) {
+            sb += '<button class="btn btn-sm btn-danger" style="padding:2px 8px; font-size:10px; margin-left:8px" onclick="tutupPaksa(\''+p.id+'\')">Tutup Paksa</button>';
+          }
+        }
+        
+        return '<div class="entry"><div class="em"><div class="en">'+p.dosen+'</div><div class="es">'+p.mk+(p.kelas?' · '+p.kelas:'')+' · '+p.ruang+' <span class="badge mode-badge" style="font-size:10px; margin-left:4px">'+md+'</span></div><div class="es" style="margin-top:4px;display:flex;gap:6px;flex-wrap:wrap;align-items:center"><span>Jadwal: <b>'+jt+'</b></span><span>Hadir: <b>'+p.waktuHadir+'</b></span><span class="badge '+p.color+'" style="font-size:11px">'+p.status+(p.diff>0?' (+'+p.diff+' mnt)':'')+'</span>'+(p.waktuSelesai?'<span>Selesai: <b>'+p.waktuSelesai+'</b></span>':'')+sb+'</div></div></div>';
+      }).join('');
     }
-    
-    return '<div class="entry"><div class="em"><div class="en">'+p.dosen+'</div><div class="es">'+p.mk+(p.kelas?' · '+p.kelas:'')+' · '+p.ruang+' <span class="badge mode-badge" style="font-size:10px; margin-left:4px">'+md+'</span> · '+p.tanggal+'</div><div class="es" style="margin-top:4px;display:flex;gap:6px;flex-wrap:wrap;align-items:center"><span>Jadwal: <b>'+jt+'</b></span><span>Hadir: <b>'+p.waktuHadir+'</b></span><span class="badge '+p.color+'" style="font-size:11px">'+p.status+(p.diff>0?' (+'+p.diff+' mnt)':'')+'</span>'+(p.waktuSelesai?'<span>Selesai: <b>'+p.waktuSelesai+'</b></span>':'')+sb+'</div></div></div>';
-  }).join('');
+  }
+  document.getElementById('det').innerHTML = detHtml;
 }
 
 function exportExcel() {
