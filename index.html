@@ -303,8 +303,12 @@ tr:last-child td{border-bottom:none}
   <div style="display:flex; justify-content:space-between; align-items:flex-end; margin-bottom:1rem; flex-wrap:wrap; gap:10px">
     <div class="row" style="flex:1; margin-bottom:0">
       <div class="field" style="margin-bottom:0">
-        <label>Filter bulan</label>
-        <select id="rb" onchange="renderR()"><option value="all">Semua</option><option value="4">April 2026</option><option value="5">Mei 2026</option><option value="6">Juni 2026</option></select>
+        <label>Dari Tanggal</label>
+        <input type="date" id="r-start" onchange="renderR()" />
+      </div>
+      <div class="field" style="margin-bottom:0">
+        <label>Sampai Tanggal</label>
+        <input type="date" id="r-end" onchange="renderR()" />
       </div>
       <div class="field" style="margin-bottom:0">
         <label>Filter dosen</label>
@@ -1046,11 +1050,37 @@ async function hapusJad(id){
   catch(e){setSB('er');alert('Gagal: '+e.message);}
 }
 
+function parseTanggal(str) {
+  if(!str) return 0;
+  var p = str.split(/[\/\-]/);
+  if(p.length === 3) return new Date(p[2], p[1]-1, p[0]).getTime();
+  return 0;
+}
+
 function renderR(){
-  var bln=document.getElementById('rb').value,df=document.getElementById('rd').value;
+  var start=document.getElementById('r-start').value;
+  var end=document.getElementById('r-end').value;
+  var df=document.getElementById('rd').value;
+  
   var data=P;
-  if(bln!=='all')data=data.filter(function(p){return p.bulan==bln;});
-  if(df!=='all')data=data.filter(function(p){return p.dosenId===df;});
+  var gf=G;
+
+  if(start) {
+    var tsStart = new Date(start).setHours(0,0,0,0);
+    data = data.filter(function(p){ return parseTanggal(p.tanggal) >= tsStart; });
+    gf = gf.filter(function(g){ return new Date(g.ganti).getTime() >= tsStart; });
+  }
+  
+  if(end) {
+    var tsEnd = new Date(end).setHours(23,59,59,999);
+    data = data.filter(function(p){ return parseTanggal(p.tanggal) <= tsEnd; });
+    gf = gf.filter(function(g){ return new Date(g.ganti).getTime() <= tsEnd; });
+  }
+
+  if(df!=='all') {
+    data=data.filter(function(p){return p.dosenId===df;});
+    gf=gf.filter(function(g){return g.dosenId===df;});
+  }
   
   var h=data.filter(function(p){return p.color==='green';}).length;
   var k=data.filter(function(p){return p.color==='yellow';}).length;
@@ -1064,10 +1094,6 @@ function renderR(){
   var sh=sd.filter(function(p){return p.colorSelesai==='blue';}).length;
   var sm=sd.filter(function(p){return p.colorSelesai==='red';}).length;
   var sn=data.length-sd.length;
-  
-  var gf=G;
-  if(bln!=='all')gf=gf.filter(function(g){try{return new Date(g.ganti).getMonth()+1==bln;}catch(e){return true;}});
-  if(df!=='all')gf=gf.filter(function(g){return g.dosenId===df;});
   
   document.getElementById('rt').textContent=data.length;
   document.getElementById('rg').textContent=gf.length;
@@ -1128,7 +1154,7 @@ function renderR(){
     }
 
     var statPresensi = totPresensi === 0 
-      ? '<div style="font-size:11px;color:#a32d2d;margin-bottom:6px;font-weight:500">0x presensi tercatat di bulan ini</div>'
+      ? '<div style="font-size:11px;color:#a32d2d;margin-bottom:6px;font-weight:500">0x presensi tercatat dalam periode ini</div>'
       : '<div style="display:flex;gap:2px;height:14px;border-radius:20px;overflow:hidden;margin-bottom:2px">'+(dh?'<div style="flex:'+dh+';background:#639922"></div>':'')+(dk?'<div style="flex:'+dk+';background:#BA7517"></div>':'')+(dm?'<div style="flex:'+dm+';background:#E24B4A"></div>':'')+'</div><div style="font-size:11px;color:#888;margin-bottom:6px">Hadir: '+dh+'x tepat · '+dk+'x terlambat · '+dm+'x sangat ('+totPresensi+'x total)</div>';
 
     var statMode = totPresensi === 0 ? '' : 
@@ -1160,16 +1186,31 @@ function renderR(){
 function exportExcel() {
   if(!isAdmin) return;
   
-  var bln=document.getElementById('rb').value, df=document.getElementById('rd').value;
-  var selectBln = document.getElementById('rb');
-  var blnLabel = bln === 'all' ? 'Semua_Bulan' : selectBln.options[selectBln.selectedIndex].text.replace(' ', '_');
+  var start=document.getElementById('r-start').value;
+  var end=document.getElementById('r-end').value;
+  var df=document.getElementById('rd').value;
+  
+  var labelTanggal = (start ? start : 'Awal') + '_sd_' + (end ? end : 'Akhir');
   
   var data=P;
-  if(bln!=='all') data=data.filter(function(p){return p.bulan==bln;});
-  if(df!=='all') data=data.filter(function(p){return p.dosenId===df;});
-
   var gf=G;
-  if(bln!=='all')gf=gf.filter(function(g){try{return new Date(g.ganti).getMonth()+1==bln;}catch(e){return true;}});
+
+  if(start) {
+    var tsStart = new Date(start).setHours(0,0,0,0);
+    data = data.filter(function(p){ return parseTanggal(p.tanggal) >= tsStart; });
+    gf = gf.filter(function(g){ return new Date(g.ganti).getTime() >= tsStart; });
+  }
+  
+  if(end) {
+    var tsEnd = new Date(end).setHours(23,59,59,999);
+    data = data.filter(function(p){ return parseTanggal(p.tanggal) <= tsEnd; });
+    gf = gf.filter(function(g){ return new Date(g.ganti).getTime() <= tsEnd; });
+  }
+
+  if(df!=='all') {
+    data=data.filter(function(p){return p.dosenId===df;});
+    gf=gf.filter(function(g){return g.dosenId===df;});
+  }
 
   var ds=df==='all'?D:D.filter(function(d){return d.id===df;});
 
@@ -1177,7 +1218,7 @@ function exportExcel() {
   table += '<head><meta charset="UTF-8"></head><body>';
   table += '<table border="1" style="border-collapse:collapse; font-family:sans-serif; font-size:12px;">';
   table += '<thead>';
-  table += '<tr><th colspan="11" style="font-size:16px; font-weight:bold; padding:10px; background:#f0f0f0;">Laporan Evaluasi Presensi Dosen - ' + blnLabel.replace('_',' ') + '</th></tr>';
+  table += '<tr><th colspan="11" style="font-size:16px; font-weight:bold; padding:10px; background:#f0f0f0;">Laporan Evaluasi Presensi Dosen (' + labelTanggal.replace(/_/g,' ') + ')</th></tr>';
   table += '<tr style="background:#185fa5; color:#ffffff;">';
   table += '<th style="padding:8px">Nama Dosen</th>';
   table += '<th style="padding:8px">Total MK Aktif</th>';
@@ -1243,7 +1284,7 @@ function exportExcel() {
   var url = URL.createObjectURL(blob);
   var a = document.createElement('a');
   a.href = url;
-  a.download = 'Laporan_Presensi_' + blnLabel + '.xls';
+  a.download = 'Laporan_Presensi_' + labelTanggal + '.xls';
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
