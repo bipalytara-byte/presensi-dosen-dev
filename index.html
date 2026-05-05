@@ -602,21 +602,47 @@ function fillJadwalDosen(){
   if(!currentUser)return;
   var sel=document.getElementById('pj');
   sel.innerHTML='<option value="">— Pilih jadwal —</option>';
+  
   var today=todayHari();
+  var todayStr=new Date().toLocaleDateString('id-ID');
+  
+  // 1. Cek jadwal mana saja yang sudah dipresensi hari ini
+  var jadwalSelesai = P.filter(function(p){
+    return p.tanggal === todayStr && p.dosenId === currentUser.id;
+  }).map(function(p){ return p.jadwalId; });
+
   var jd=J.filter(function(j){return j.dosenId===currentUser.id;});
-  var todJ=jd.filter(function(j){return j.hari===today;}).sort(function(a,b){return a.jamMulai.localeCompare(b.jamMulai);});
+  var jadwalHariIniAsli = jd.filter(function(j){return j.hari===today;});
+  
+  // 2. Filter agar todJ hanya berisi jadwal hari ini yang BELUM dipresensi
+  var todJ=jadwalHariIniAsli.filter(function(j){
+    return jadwalSelesai.indexOf(j.id) === -1;
+  }).sort(function(a,b){return a.jamMulai.localeCompare(b.jamMulai);});
+  
   var othJ=jd.filter(function(j){return j.hari!==today;}).sort(function(a,b){return HARI.indexOf(a.hari)-HARI.indexOf(b.hari)||a.jamMulai.localeCompare(b.jamMulai);});
+  
+  // 3. Render ke dropdown
   if(todJ.length>0){
     var g=document.createElement('optgroup');g.label='── Hari ini ('+today+') ──';
     todJ.forEach(function(j){var o=document.createElement('option');o.value=j.id;o.textContent='✅ '+j.mk+(j.kelas?' ['+j.kelas+']':'')+' · '+jStr(j.jamMulai)+(j.jamSelesai?'–'+jStr(j.jamSelesai):'')+' · '+j.ruang;g.appendChild(o);});
     sel.appendChild(g);
-  }else{var o=document.createElement('option');o.disabled=true;o.textContent='— Tidak ada jadwal hari '+today+' —';sel.appendChild(o);}
+  } else if (jadwalHariIniAsli.length > 0) {
+    // Jika ada jadwal hari ini TAPI sudah selesai semua
+    var o=document.createElement('option');o.disabled=true;o.textContent='🎉 Jadwal sudah tidak ada, terima kasih sudah berbagi ilmu hari ini';sel.appendChild(o);
+  } else {
+    // Jika dari awal memang tidak ada jadwal di hari tersebut
+    var o=document.createElement('option');o.disabled=true;o.textContent='— Tidak ada jadwal hari '+today+' —';sel.appendChild(o);
+  }
+  
   if(othJ.length>0){
     var g2=document.createElement('optgroup');g2.label='── Jadwal hari lain ──';
     othJ.forEach(function(j){var o=document.createElement('option');o.value=j.id;o.textContent='['+j.hari+'] '+j.mk+(j.kelas?' ['+j.kelas+']':'')+' · '+jStr(j.jamMulai)+' · '+j.ruang;g2.appendChild(o);});
     sel.appendChild(g2);
   }
+  
   if(jd.length===0){var o=document.createElement('option');o.disabled=true;o.textContent='Belum ada jadwal terdaftar';sel.appendChild(o);}
+  
+  // Langsung pilih jika hanya sisa 1 jadwal yang belum dipresensi
   if(todJ.length===1){sel.value=todJ[0].id;onJadwal();}
 }
 
