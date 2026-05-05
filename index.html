@@ -324,6 +324,12 @@ tr:last-child td{border-bottom:none}
     <div class="stat"><div class="stat-num" id="rp">0%</div><div class="stat-label">Tepat waktu hadir</div></div>
     <div class="stat"><div class="stat-num" id="rs">0%</div><div class="stat-label">Tepat waktu selesai</div></div>
   </div>
+
+  <!-- BANNER PERINGATAN (Dosen melanggar jadwal) -->
+  <div id="pelanggaran-banner" style="display:none; background:#fcebeb; border:1px solid #f09595; color:#a32d2d; padding:12px 16px; border-radius:8px; margin-bottom:1rem; font-size:13px; font-weight:500; line-height: 1.5;">
+    🚨 Terdapat <b id="tp-count" style="font-size:15px;">0</b> dosen yang seharusnya mengajar di rentang tanggal ini namun belum menggunakan aplikasi presensi.
+  </div>
+
   <div class="card"><div class="sec">Rekap Mode Perkuliahan</div>
     <div class="dw"><canvas id="cm" width="110" height="110"></canvas>
       <div>
@@ -1057,11 +1063,33 @@ function parseTanggal(str) {
   return 0;
 }
 
+// Menentukan Hari apa saja yang ada di rentang tanggal
+function getHariInRange(start, end) {
+  var H = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
+  if (!start && !end) return ['Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
+  
+  var sDate = start ? new Date(start + 'T00:00:00') : new Date(end + 'T00:00:00');
+  var eDate = end ? new Date(end + 'T00:00:00') : new Date(start + 'T00:00:00');
+  
+  var diff = Math.floor((eDate - sDate) / (1000 * 60 * 60 * 24));
+  if (diff >= 6) return H; // Kalau rentang >= 7 hari, otomatis semua hari masuk
+  
+  var res = [];
+  var curr = new Date(sDate);
+  while (curr <= eDate) {
+    var dName = H[curr.getDay()];
+    if (res.indexOf(dName) === -1) res.push(dName);
+    curr.setDate(curr.getDate() + 1);
+  }
+  return res;
+}
+
 function renderR(){
   var start=document.getElementById('r-start').value;
   var end=document.getElementById('r-end').value;
   var df=document.getElementById('rd').value;
   
+  var daysInRange = getHariInRange(start, end);
   var data=P;
   var gf=G;
 
@@ -1115,6 +1143,8 @@ function renderR(){
   donut('ch',[{v:h,c:'#639922'},{v:k,c:'#BA7517'},{v:m,c:'#E24B4A'}],data.length);
   donut('cs',[{v:sh,c:'#185fa5'},{v:sm,c:'#E24B4A'},{v:sn,c:'#ddd'}],data.length);
   
+  var totalPelanggaran = 0;
+
   var ds=df==='all'?D:D.filter(function(d){return d.id===df;});
   document.getElementById('bd').innerHTML=ds.map(function(d){
     var dd=data.filter(function(p){return p.dosenId===d.id;});
@@ -1127,6 +1157,9 @@ function renderR(){
     var totGanti = dg.length;
 
     if(totJadwal === 0 && totPresensi === 0 && totGanti === 0) return '';
+
+    // Cek apakah dosen punya jadwal di hari-hari dalam rentang yang dipilih
+    var hasJadwalInRange = jd.filter(function(j) { return daysInRange.indexOf(j.hari) > -1; }).length > 0;
 
     var dh=dd.filter(function(p){return p.color==='green';}).length;
     var dk=dd.filter(function(p){return p.color==='yellow';}).length;
@@ -1148,7 +1181,12 @@ function renderR(){
 
     var warningHtml = '';
     if(totJadwal > 0 && totPresensi === 0) {
-      warningHtml += '<div style="margin-top:8px;padding:8px;background:#fcebeb;border:1px solid #f09595;border-radius:6px;font-size:11px;font-weight:600;color:#a32d2d;display:flex;align-items:center;gap:6px"><span>🚨</span> Memiliki '+totJadwal+' jadwal aktif, tapi TIDAK PERNAH presensi.</div>';
+      if(hasJadwalInRange) {
+        totalPelanggaran++;
+        warningHtml += '<div style="margin-top:8px;padding:8px;background:#fcebeb;border:1px solid #f09595;border-radius:6px;font-size:11px;font-weight:600;color:#a32d2d;display:flex;align-items:center;gap:6px"><span>🚨</span> PERINGATAN: Ada jadwal mengajar, tapi tidak ada presensi.</div>';
+      } else {
+        warningHtml += '<div style="margin-top:8px;padding:8px;background:#f5f5f5;border:1px solid #ddd;border-radius:6px;font-size:11px;font-weight:600;color:#666;display:flex;align-items:center;gap:6px"><span>ℹ️</span> Aman (Belum menggunakan aplikasi karena kemungkinan tidak ada jam mengajar di rentang ini).</div>';
+      }
     } else if(pAsinkron >= 50) {
       warningHtml += '<div style="margin-top:8px;padding:8px;background:#fff4e5;border:1px solid #fac775;border-radius:6px;font-size:11px;font-weight:600;color:#854f0b;display:flex;align-items:center;gap:6px"><span>⚠️</span> Teguran: Mode Asinkronus / Penugasan sangat tinggi ('+pAsinkron+'%).</div>';
     }
@@ -1175,6 +1213,10 @@ function renderR(){
            '</div>';
   }).filter(Boolean).join('')||'<p class="empty">Belum ada data.</p>';
 
+  // Update Banner Total Pelanggaran
+  document.getElementById('tp-count').textContent = totalPelanggaran;
+  document.getElementById('pelanggaran-banner').style.display = totalPelanggaran > 0 ? 'block' : 'none';
+
   document.getElementById('det').innerHTML=!data.length?'<p class="empty">Belum ada data.</p>':data.slice().reverse().map(function(p){
     var jt=jStr(p.jam)||p.jam;
     var md=p.modeKuliah||'Luring';
@@ -1190,6 +1232,7 @@ function exportExcel() {
   var end=document.getElementById('r-end').value;
   var df=document.getElementById('rd').value;
   
+  var daysInRange = getHariInRange(start, end);
   var labelTanggal = (start ? start : 'Awal') + '_sd_' + (end ? end : 'Akhir');
   
   var data=P;
@@ -1231,6 +1274,8 @@ function exportExcel() {
   table += '<th style="padding:8px">Status SP / Peringatan Akademik</th>';
   table += '</tr></thead><tbody>';
 
+  var totalPelanggaran = 0;
+
   ds.forEach(function(d) {
     var dd = data.filter(function(p){return p.dosenId===d.id;});
     var jd = J.filter(function(j){return j.dosenId===d.id;});
@@ -1241,6 +1286,8 @@ function exportExcel() {
     var totGanti = dg.length;
     
     if(totJadwal === 0 && totPresensi === 0 && totGanti === 0) return;
+
+    var hasJadwalInRange = jd.filter(function(j) { return daysInRange.indexOf(j.hari) > -1; }).length > 0;
 
     var dh=dd.filter(function(p){return p.color==='green';}).length;
     var dk=dd.filter(function(p){return p.color==='yellow';}).length;
@@ -1258,8 +1305,14 @@ function exportExcel() {
     var status = 'Aman';
     var statusStyle = '';
     if (totJadwal > 0 && totPresensi === 0) {
-       status = '🚨 PERINGATAN (0 Presensi)';
-       statusStyle = 'color:#a32d2d; font-weight:bold; background:#fcebeb;';
+       if (hasJadwalInRange) {
+         totalPelanggaran++;
+         status = '🚨 PERINGATAN (Ada Jadwal, 0 Presensi)';
+         statusStyle = 'color:#a32d2d; font-weight:bold; background:#fcebeb;';
+       } else {
+         status = 'Aman (Belum menggunakan aplikasi karena kemungkinan tidak ada jam mengajar)';
+         statusStyle = 'color:#555; background:#f5f5f5;';
+       }
     } else if (pAsinkron >= 50) {
        status = '⚠️ TEGURAN (Asinkronus '+pAsinkron+'%)';
        statusStyle = 'color:#854f0b; font-weight:bold; background:#fff4e5;';
@@ -1277,6 +1330,12 @@ function exportExcel() {
     table += '<td style="padding:5px; ' + statusStyle + '">' + status + '</td>';
     table += '</tr>';
   });
+
+  // Baris footer (Ringkasan Total Pelanggaran)
+  table += '<tr>';
+  table += '<td colspan="8" style="text-align:right; font-weight:bold; padding:10px; font-size:14px;">Total Dosen Melanggar (Ada Jadwal Tapi Tidak Presensi):</td>';
+  table += '<td style="font-weight:bold; color:#a32d2d; background:#fcebeb; padding:10px; text-align:center; font-size:14px;">' + totalPelanggaran + ' Dosen</td>';
+  table += '</tr>';
 
   table += '</tbody></table></body></html>';
 
