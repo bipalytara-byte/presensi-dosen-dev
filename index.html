@@ -98,7 +98,6 @@ tr:last-child td{border-bottom:none}
 <div class="login-screen show" id="login-screen">
   <div class="login-box">
     
-    <!-- VIEW LOGIN DOSEN -->
     <div id="login-dosen-view">
       <div class="login-logo">👨‍🏫</div>
       <div class="login-title">Lytara Presensi Dosen</div>
@@ -122,7 +121,6 @@ tr:last-child td{border-bottom:none}
       </div>
     </div>
 
-    <!-- VIEW LOGIN ADMIN -->
     <div id="login-admin-view" style="display:none">
       <div class="login-logo">🛡️</div>
       <div class="login-title">Portal Admin Akademik</div>
@@ -152,6 +150,9 @@ tr:last-child td{border-bottom:none}
       <p id="clk">-</p>
     </div>
     <div style="display:flex;align-items:center;gap:6px;flex-shrink:0">
+      <button class="btn btn-sm" onclick="refreshDataLokal()" style="display:flex;align-items:center;gap:4px;padding:4px 10px;background:#f5f5f3;border:1px solid #e5e5e3;color:#555;font-weight:500" title="Tarik data terbaru dari server">
+        <span style="font-size:14px">🔄</span> Refresh
+      </button>
       <span class="sb" id="sb">Offline</span>
       <button class="user-badge" id="user-btn" onclick="logout()" title="Klik untuk keluar">
         <div class="user-avatar" id="user-avatar">?</div>
@@ -170,8 +171,9 @@ tr:last-child td{border-bottom:none}
   <button class="tab" id="tab-jadwal" onclick="pg('jadwal',this)" style="display:none">Kelola Jadwal</button>
 </div>
 
-<!-- HALAMAN PRESENSI (KHUSUS DOSEN) -->
 <div id="page-hadir" class="page">
+  <div id="notif-ganti" style="display:none; margin-bottom:1rem;"></div>
+
   <div class="resume-banner" id="resume-banner" style="display:none">
     <div class="resume-text">
       <b id="resume-title">Sesi mengajar belum selesai</b>
@@ -228,7 +230,6 @@ tr:last-child td{border-bottom:none}
   </div>
 </div>
 
-<!-- HALAMAN JADWAL PENGGANTI -->
 <div id="page-ganti" class="page">
   <div class="card" id="form-pengajuan-ganti">
     <div class="sec">Pengajuan jadwal pengganti</div>
@@ -242,7 +243,8 @@ tr:last-child td{border-bottom:none}
     </div>
     <div id="terr" class="aw" style="display:none">Tanggal pengganti harus setelah tanggal asli.</div>
     <div class="row">
-      <div class="field"><label>Jam pengganti</label><input type="time" id="gjam"/></div>
+      <div class="field"><label>Jam Mulai</label><input type="time" id="gjam_mulai"/></div>
+      <div class="field"><label>Jam Selesai</label><input type="time" id="gjam_selesai"/></div>
       <div class="field"><label>Mode</label><select id="gmode"><option value="luring">Luring</option><option value="daring">Daring</option></select></div>
     </div>
     <div class="field"><label>Tempat / link</label><input type="text" id="gtempat" placeholder="Ruang 201 atau link Zoom"/></div>
@@ -261,7 +263,6 @@ tr:last-child td{border-bottom:none}
   </div>
 </div>
 
-<!-- HALAMAN RIWAYAT SAYA (KHUSUS DOSEN) -->
 <div id="page-riwayat" class="page">
   <div class="card">
     <div class="sec">Rekam Jejak Presensi Anda</div>
@@ -274,7 +275,6 @@ tr:last-child td{border-bottom:none}
   </div>
 </div>
 
-<!-- HALAMAN KELOLA DOSEN (KHUSUS ADMIN) -->
 <div id="page-dosen" class="page">
   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
     <div><div style="font-size:15px;font-weight:500">Data dosen</div><div style="font-size:12px;color:#888" id="dcnt"></div></div>
@@ -284,7 +284,6 @@ tr:last-child td{border-bottom:none}
   <div id="dl"></div>
 </div>
 
-<!-- HALAMAN KELOLA JADWAL (KHUSUS ADMIN) -->
 <div id="page-jadwal" class="page">
   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
     <div><div style="font-size:15px;font-weight:500">Jadwal perkuliahan</div><div style="font-size:12px;color:#888" id="jcnt"></div></div>
@@ -297,7 +296,6 @@ tr:last-child td{border-bottom:none}
   <div id="jl"></div>
 </div>
 
-<!-- HALAMAN LAPORAN (KHUSUS ADMIN) -->
 <div id="page-report" class="page">
   
   <div style="display:flex; justify-content:space-between; align-items:flex-end; margin-bottom:1rem; flex-wrap:wrap; gap:10px">
@@ -325,7 +323,6 @@ tr:last-child td{border-bottom:none}
     <div class="stat"><div class="stat-num" id="rs">0%</div><div class="stat-label">Tepat waktu selesai</div></div>
   </div>
 
-  <!-- BANNER PERINGATAN (Dosen melanggar jadwal) -->
   <div id="pelanggaran-banner" style="display:none; background:#fcebeb; border:1px solid #f09595; color:#a32d2d; padding:12px 16px; border-radius:8px; margin-bottom:1rem; font-size:13px; font-weight:500; line-height: 1.5;">
     🚨 Terdapat <b id="tp-count" style="font-size:15px;">0</b> dosen yang seharusnya mengajar di rentang tanggal ini namun belum menggunakan aplikasi presensi.
   </div>
@@ -368,7 +365,6 @@ tr:last-child td{border-bottom:none}
 
 </div>
 
-<!-- MODAL DOSEN -->
 <div class="mo" id="mdos">
   <div class="md">
     <div class="mt" id="mdt">Tambah dosen baru</div>
@@ -383,7 +379,6 @@ tr:last-child td{border-bottom:none}
   </div>
 </div>
 
-<!-- MODAL JADWAL -->
 <div class="mo" id="mjad">
   <div class="md">
     <div class="mt" id="mjt">Tambah jadwal perkuliahan</div>
@@ -521,6 +516,48 @@ function logout(){
   loadForLogin();
 }
 
+async function refreshDataLokal() {
+  setSB('sy');
+  try {
+    var r = await Promise.all([
+      get({action:'getDosen'}), 
+      get({action:'getJadwal'}), 
+      get({action:'getPresensi'}), 
+      get({action:'getGanti'})
+    ]);
+    
+    D = r[0].data || [];
+    J = r[1].data || [];
+    P = r[2].data || [];
+    G = r[3].data || [];
+    setSB('ok'); 
+    
+    var oldRd = document.getElementById('rd') ? document.getElementById('rd').value : 'all';
+    var oldJfd = document.getElementById('jfd') ? document.getElementById('jfd').value : 'all';
+    
+    fillJadwalDosen();
+    var rd = document.getElementById('rd'); 
+    if(rd) { rd.innerHTML='<option value="all">Semua dosen</option>'; D.forEach(function(d){var o=document.createElement('option');o.value=d.id;o.textContent=d.nama;rd.appendChild(o);}); rd.value = oldRd; }
+    
+    var jfd = document.getElementById('jfd'); 
+    if(jfd) { jfd.innerHTML='<option value="all">Semua dosen</option>'; D.forEach(function(d){var o=document.createElement('option');o.value=d.id;o.textContent=d.nama;jfd.appendChild(o);}); jfd.value = oldJfd; }
+    
+    renderD(); 
+    renderJ(); 
+    renderHari(); 
+    renderG(); 
+    renderRiwayatSaya();
+    
+    if(document.getElementById('page-report').classList.contains('active')) {
+       renderR();
+    }
+    cekNotifGanti();
+  } catch(e) {
+    setSB('er');
+    alert('Gagal menyegarkan data: ' + e.message);
+  }
+}
+
 async function loadThenShow(){
   setSB('sy');
   try{
@@ -616,7 +653,6 @@ function fillJadwalDosen(){
   var today=todayHari();
   var todayStr=new Date().toLocaleDateString('id-ID');
   
-  // 1. Cek jadwal mana saja yang sudah dipresensi hari ini
   var jadwalSelesai = P.filter(function(p){
     return p.tanggal === todayStr && p.dosenId === currentUser.id;
   }).map(function(p){ return p.jadwalId; });
@@ -624,23 +660,19 @@ function fillJadwalDosen(){
   var jd=J.filter(function(j){return j.dosenId===currentUser.id;});
   var jadwalHariIniAsli = jd.filter(function(j){return j.hari===today;});
   
-  // 2. Filter agar todJ hanya berisi jadwal hari ini yang BELUM dipresensi
   var todJ=jadwalHariIniAsli.filter(function(j){
     return jadwalSelesai.indexOf(j.id) === -1;
   }).sort(function(a,b){return a.jamMulai.localeCompare(b.jamMulai);});
   
   var othJ=jd.filter(function(j){return j.hari!==today;}).sort(function(a,b){return HARI.indexOf(a.hari)-HARI.indexOf(b.hari)||a.jamMulai.localeCompare(b.jamMulai);});
   
-  // 3. Render ke dropdown
   if(todJ.length>0){
     var g=document.createElement('optgroup');g.label='── Hari ini ('+today+') ──';
     todJ.forEach(function(j){var o=document.createElement('option');o.value=j.id;o.textContent='✅ '+j.mk+(j.kelas?' ['+j.kelas+']':'')+' · '+jStr(j.jamMulai)+(j.jamSelesai?'–'+jStr(j.jamSelesai):'')+' · '+j.ruang;g.appendChild(o);});
     sel.appendChild(g);
   } else if (jadwalHariIniAsli.length > 0) {
-    // Jika ada jadwal hari ini TAPI sudah selesai semua
     var o=document.createElement('option');o.disabled=true;o.textContent='🎉 Jadwal sudah tidak ada, terima kasih sudah berbagi ilmu hari ini';sel.appendChild(o);
   } else {
-    // Jika dari awal memang tidak ada jadwal di hari tersebut
     var o=document.createElement('option');o.disabled=true;o.textContent='— Tidak ada jadwal hari '+today+' —';sel.appendChild(o);
   }
   
@@ -652,7 +684,6 @@ function fillJadwalDosen(){
   
   if(jd.length===0){var o=document.createElement('option');o.disabled=true;o.textContent='Belum ada jadwal terdaftar';sel.appendChild(o);}
   
-  // Langsung pilih jika hanya sisa 1 jadwal yang belum dipresensi
   if(todJ.length===1){sel.value=todJ[0].id;onJadwal();}
 }
 
@@ -669,7 +700,11 @@ function onJadwal(){
   var isGantiValid = G.find(function(g){ return g.dosenId === currentUser.id && g.mk === j.mk && g.statusAcc === 'Disetujui' && g.ganti === ymd; });
 
   if(isGantiValid) {
-      document.getElementById('pjam').value = jStr(isGantiValid.jam);
+      var jMulaiOverride = isGantiValid.jam;
+      if(jMulaiOverride.indexOf('-') > -1) {
+          jMulaiOverride = jMulaiOverride.split('-')[0].trim();
+      }
+      document.getElementById('pjam').value = jStr(jMulaiOverride);
       document.getElementById('pruang').value = isGantiValid.tempat || j.ruang;
       document.getElementById('pmode').value = isGantiValid.mode === 'daring' ? 'Daring Sinkronus' : 'Luring';
       
@@ -764,7 +799,7 @@ async function rekam(){
   var now=new Date(),st=stH(jam);
   var ts=now.toLocaleDateString('id-ID',{day:'2-digit',month:'2-digit',year:'numeric'})+' '+now.toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
   
-  var jamSelesaiAkhir = isGantiValid ? '' : (jad.jamSelesai||'');
+  var jamSelesaiAkhir = isGantiValid && isGantiValid.jam.indexOf('-') > -1 ? isGantiValid.jam.split('-')[1].trim() : (isGantiValid ? '' : (jad.jamSelesai||''));
 
   var rec={id:Date.now().toString(),dosenId:currentUser.id,dosen:currentUser.nama,mk:jad.mk,kelas:jad.kelas||'',
     jadwalId:jid,jam:jam,ruang:ruang,waktuHadir:now.toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'}),
@@ -878,12 +913,18 @@ function cekTgl(){
 async function kirimGanti(){
   if(!currentUser){alert('Hanya dosen yang bisa mengajukan jadwal pengganti.');return;}
   var mk=document.getElementById('gmk').value,asli=document.getElementById('gasli').value;
-  var ganti=document.getElementById('gganti').value,jam=document.getElementById('gjam').value;
-  if(!mk||!asli||!ganti||!jam){alert('Lengkapi field wajib (Mata kuliah, Tanggal, Jam).');return;}
+  var ganti=document.getElementById('gganti').value;
+  
+  var jMulai=document.getElementById('gjam_mulai').value;
+  var jSelesai=document.getElementById('gjam_selesai').value;
+  
+  if(!mk||!asli||!ganti||!jMulai||!jSelesai){alert('Lengkapi field wajib (Mata kuliah, Tanggal, Jam Mulai & Selesai).');return;}
   if(new Date(ganti)<=new Date(asli)){alert('Tanggal pengganti harus setelah tanggal asli.');return;}
   
+  var jamGabung = jMulai + ' - ' + jSelesai;
+  
   var rec={
-    id:Date.now().toString(), dosenId:currentUser.id, dosen:currentUser.nama, mk:mk, asli:asli, ganti:ganti, jam:jam,
+    id:Date.now().toString(), dosenId:currentUser.id, dosen:currentUser.nama, mk:mk, asli:asli, ganti:ganti, jam:jamGabung,
     mode:document.getElementById('gmode').value, tempat:document.getElementById('gtempat').value,
     ket:document.getElementById('gket').value, diajukan:new Date().toLocaleDateString('id-ID'),
     bukti:document.getElementById('gbukti').value, statusAcc:'Menunggu', alasanTolak:''
@@ -892,7 +933,7 @@ async function kirimGanti(){
   try{
     await post({action:'saveGanti',data:rec});
     G.push(rec);setSB('ok');renderG();
-    ['gmk','gasli','gganti','gjam','gtempat','gket','gbukti'].forEach(function(id){document.getElementById(id).value='';});
+    ['gmk','gasli','gganti','gjam_mulai','gjam_selesai','gtempat','gket','gbukti'].forEach(function(id){document.getElementById(id).value='';});
     alert('Jadwal pengganti berhasil diajukan dan menunggu ACC Admin!');
   }catch(e){setSB('er');alert('Gagal: '+e.message);}
 }
@@ -1085,7 +1126,7 @@ function getHariInRange(start, end) {
 
 // FITUR KHUSUS WK I: Tutup Paksa Sesi
 async function tutupPaksa(id) {
-  // Token rahasia khusus Pak Anggi
+  // Token rahasia khusus
   var TOKEN_WKI = '1990'; 
   
   var inputToken = prompt('🛡️ OTORISASI DIBUTUHKAN:\nMasukkan Token Rahasia WK I untuk menutup paksa sesi ini:');
@@ -1192,7 +1233,6 @@ function renderR(){
 
     if(totJadwal === 0 && totPresensi === 0 && totGanti === 0) return '';
 
-    // Cek apakah dosen punya jadwal di hari-hari dalam rentang yang dipilih
     var hasJadwalInRange = jd.filter(function(j) { return daysInRange.indexOf(j.hari) > -1; }).length > 0;
 
     var dh=dd.filter(function(p){return p.color==='green';}).length;
@@ -1247,7 +1287,6 @@ function renderR(){
            '</div>';
   }).filter(Boolean).join('')||'<p class="empty">Belum ada data.</p>';
 
-  // Update Banner Total Pelanggaran
   document.getElementById('tp-count').textContent = totalPelanggaran;
   document.getElementById('pelanggaran-banner').style.display = totalPelanggaran > 0 ? 'block' : 'none';
 
@@ -1263,10 +1302,8 @@ function renderR(){
     detHtml = '<p class="empty">Belum ada data pada rentang tanggal ini.</p>';
   } else {
     for(var tgl in groupedData) {
-      // Header Tanggal
       detHtml += '<div style="margin-top:1.5rem; margin-bottom:10px; padding-bottom:6px; border-bottom:2px solid #e5e5e3; font-weight:600; color:#1a1a1a; font-size:14px; display:flex; align-items:center; gap:8px;"><span>📅</span> Tanggal: ' + tgl + '</div>';
       
-      // Isi data per tanggal
       detHtml += groupedData[tgl].map(function(p) {
         var jt=jStr(p.jam)||p.jam;
         var md=p.modeKuliah||'Luring';
@@ -1394,7 +1431,6 @@ function exportExcel() {
     table += '</tr>';
   });
 
-  // Baris footer (Ringkasan Total Pelanggaran)
   table += '<tr>';
   table += '<td colspan="8" style="text-align:right; font-weight:bold; padding:10px; font-size:14px;">Total Dosen Melanggar (Ada Jadwal Tapi Tidak Presensi):</td>';
   table += '<td style="font-weight:bold; color:#a32d2d; background:#fcebeb; padding:10px; text-align:center; font-size:14px;">' + totalPelanggaran + ' Dosen</td>';
@@ -1423,6 +1459,38 @@ function donut(id,sl,tot){
   ctx.fillStyle='#1a1a1a';ctx.font='500 12px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(tot+'x',sz/2,sz/2);
 }
 
+function cekNotifGanti() {
+  var w = document.getElementById('notif-ganti');
+  if(!w || !currentUser || isAdmin) return;
+
+  var today = new Date();
+  today.setHours(0,0,0,0);
+
+  var notifs = G.filter(function(g) {
+    return g.dosenId === currentUser.id &&
+           (g.statusAcc === 'Disetujui' || g.statusAcc === 'Ditolak') &&
+           new Date(g.ganti) >= today;
+  });
+
+  if(notifs.length === 0) {
+    w.style.display = 'none';
+    return;
+  }
+
+  w.innerHTML = notifs.map(function(g) {
+    var isAcc = g.statusAcc === 'Disetujui';
+    var bg = isAcc ? '#eaf3de' : '#fcebeb';
+    var border = isAcc ? '#97c459' : '#f09595';
+    var color = isAcc ? '#27500a' : '#791f1f';
+    var icon = isAcc ? '✅' : '❌';
+    return '<div style="background:'+bg+'; border:1px solid '+border+'; color:'+color+'; padding:10px 14px; border-radius:8px; margin-bottom:8px; font-size:13px; font-weight:500;">' +
+           icon + ' Pengajuan ganti jadwal <b>' + g.mk + '</b> (' + g.asli + ' &rarr; ' + g.ganti + ') telah <b>' + g.statusAcc + '</b>.' +
+           (g.alasanTolak ? ' Alasan: ' + g.alasanTolak : '') +
+           '</div>';
+  }).join('');
+  w.style.display = 'block';
+}
+
 function fillAll(){
   fillJadwalDosen();
   var rd=document.getElementById('rd');if(rd){rd.innerHTML='<option value="all">Semua dosen</option>';D.forEach(function(d){var o=document.createElement('option');o.value=d.id;o.textContent=d.nama;rd.appendChild(o);});}
@@ -1430,6 +1498,7 @@ function fillAll(){
   renderD();renderJ();renderHari();renderG();
   renderRiwayatSaya();
   updateUserUI();
+  cekNotifGanti();
 }
 
 function pg(p,btn){
