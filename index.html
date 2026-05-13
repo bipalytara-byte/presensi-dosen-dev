@@ -398,17 +398,6 @@ tr:last-child td{border-bottom:none}
       </div>
     </div>
   </div>
-  <!-- TOP 10 LEADERBOARD -->
-  <div class="card" id="top10-card">
-    <div class="sec">🏆 Top 10 Dosen Terdisiplin</div>
-    <div class="lb-tabs">
-      <button class="lb-tab active" onclick="switchLbTab('hadir',this)">⏰ Tepat Waktu Hadir</button>
-      <button class="lb-tab" onclick="switchLbTab('selesai',this)">✅ Selesai Tepat Waktu</button>
-    </div>
-    <div class="lb-panel active" id="lb-hadir"><p class="empty">Memuat data...</p></div>
-    <div class="lb-panel" id="lb-selesai"><p class="empty">Memuat data...</p></div>
-  </div>
-
   <div class="card"><div class="sec">Rekap per dosen (Monitoring SP & Mode)</div><div id="bd"></div></div>
   <div class="card"><div class="sec">Detail riwayat</div><div id="det"><p class="empty">Belum ada data.</p></div></div>
 </div>
@@ -1275,114 +1264,92 @@ function renderR(){
   
   var totalPelanggaran = 0;
 
-  var AVATAR_COLORS = ['#185fa5','#639922','#7c3aed','#c2410c','#0f766e','#b45309','#be123c','#1d4ed8','#065f46','#6d28d9','#92400e','#155e75'];
-  function avatarColor(nama) {
-    var code = 0; for(var i=0;i<nama.length;i++) code += nama.charCodeAt(i);
-    return AVATAR_COLORS[code % AVATAR_COLORS.length];
-  }
-  function initials(nama) {
-    var parts = nama.trim().split(' ').filter(Boolean);
-    if(parts.length === 1) return parts[0].substring(0,2).toUpperCase();
-    return (parts[0][0] + parts[parts.length-1][0]).toUpperCase();
-  }
+  var AVATAR_PAL = ['#185fa5','#639922','#7c3aed','#c2410c','#0f766e','#b45309','#be123c','#1d4ed8','#065f46','#6d28d9','#92400e','#155e75'];
+  function aColor(n){var c=0;for(var i=0;i<n.length;i++)c+=n.charCodeAt(i);return AVATAR_PAL[c%AVATAR_PAL.length];}
+  function aInit(n){var p=n.trim().split(' ').filter(Boolean);return p.length===1?p[0].substring(0,2).toUpperCase():(p[0][0]+p[p.length-1][0]).toUpperCase();}
 
   var ds=df==='all'?D:D.filter(function(d){return d.id===df;});
-  document.getElementById('bd').innerHTML=ds.map(function(d){
+  document.getElementById('bd').innerHTML='<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">'+ds.map(function(d){
     var dd=data.filter(function(p){return p.dosenId===d.id;});
     var jd=J.filter(function(j){return j.dosenId===d.id;});
     var dg=gf.filter(function(g){return g.dosenId===d.id && g.statusAcc==='Disetujui';});
 
-    var totJadwal = jd.length;
-    var totPresensi = dd.length;
-    var totGanti = dg.length;
+    var totJadwal=jd.length, totPresensi=dd.length, totGanti=dg.length;
+    if(totJadwal===0&&totPresensi===0&&totGanti===0) return '';
 
-    if(totJadwal === 0 && totPresensi === 0 && totGanti === 0) return '';
-
-    var hasJadwalInRange = jd.filter(function(j) { return daysInRange.indexOf(j.hari) > -1; }).length > 0;
-
+    var hasJadwalInRange=jd.filter(function(j){return daysInRange.indexOf(j.hari)>-1;}).length>0;
     var dh=dd.filter(function(p){return p.color==='green';}).length;
     var dk=dd.filter(function(p){return p.color==='yellow';}).length;
     var dm=dd.filter(function(p){return p.color==='red';}).length;
-    
-    var dsd=dd.filter(function(p){return p.waktuSelesai&&p.waktuSelesai!=='';});
-    var dsh=dsd.filter(function(p){return p.colorSelesai==='blue';}).length;
-    var dsm=dsd.filter(function(p){return p.colorSelesai==='red';}).length;
+    var dml=dd.filter(function(p){return !p.modeKuliah||p.modeKuliah.indexOf('Luring')>-1;}).length;
+    var dms=dd.filter(function(p){return p.modeKuliah&&p.modeKuliah.indexOf('Sinkronus')>-1&&p.modeKuliah.indexOf('Asinkronus')===-1;}).length;
+    var dma=dd.filter(function(p){return p.modeKuliah&&p.modeKuliah.indexOf('Asinkronus')>-1;}).length;
+    var pHadir=totPresensi?Math.round((dh/totPresensi)*100):0;
+    var pAsinkron=totPresensi?Math.round((dma/totPresensi)*100):0;
+    var pLuring=totPresensi?Math.round((dml/totPresensi)*100):0;
+    var pSinkron=totPresensi?Math.round((dms/totPresensi)*100):0;
+    var pGanti=totPresensi?Math.round((totGanti/totPresensi)*100):0;
 
-    var dml = dd.filter(function(p){return !p.modeKuliah || p.modeKuliah.indexOf('Luring')>-1;}).length;
-    var dms = dd.filter(function(p){return p.modeKuliah && p.modeKuliah.indexOf('Sinkronus')>-1 && p.modeKuliah.indexOf('Asinkronus')===-1;}).length;
-    var dma = dd.filter(function(p){return p.modeKuliah && p.modeKuliah.indexOf('Asinkronus')>-1;}).length;
-
-    var pHadir = totPresensi ? Math.round((dh/totPresensi)*100) : 0;
-    var pSelesai = dsd.length ? Math.round((dsh/dsd.length)*100) : 0;
-    var pLuring = totPresensi ? Math.round((dml/totPresensi)*100) : 0;
-    var pSinkron = totPresensi ? Math.round((dms/totPresensi)*100) : 0;
-    var pAsinkron = totPresensi ? Math.round((dma/totPresensi)*100) : 0;
-
-    // Status badge
-    var statusBadge='', warnHtml='';
-    if(totJadwal > 0 && totPresensi === 0) {
-      if(hasJadwalInRange) {
-        totalPelanggaran++;
-        statusBadge='<span class="dc2-badge" style="background:#fcebeb;color:#a32d2d;border-color:#f09595">🚨 Peringatan</span>';
-        warnHtml='<div class="dc2-warn" style="background:#fcebeb;border:1px solid #f09595;color:#a32d2d">🚨 Ada jadwal mengajar tapi tidak ada presensi tercatat.</div>';
-      } else {
-        statusBadge='<span class="dc2-badge" style="background:#f5f5f3;color:#666;border-color:#ddd">ℹ️ Belum aktif</span>';
-      }
-    } else if(pAsinkron >= 50) {
-      statusBadge='<span class="dc2-badge" style="background:#fff4e5;color:#854f0b;border-color:#fac775">⚠️ Teguran Asinkronus</span>';
-      warnHtml='<div class="dc2-warn" style="background:#fff4e5;border:1px solid #fac775;color:#854f0b">⚠️ Mode Asinkronus / Penugasan sangat tinggi ('+pAsinkron+'%).</div>';
-    } else if(pHadir >= 80) {
-      statusBadge='<span class="dc2-badge" style="background:#eaf3de;color:#27500a;border-color:#97c459">✅ Disiplin</span>';
-    } else {
-      statusBadge='<span class="dc2-badge" style="background:#f5f5f3;color:#555;border-color:#ddd">— Normal</span>';
+    // Status
+    var statusColor='#eaf3de',statusTextColor='#27500a',statusBorder='#97c459',statusLabel='✅ Disiplin';
+    var warnHtml='';
+    if(totJadwal>0&&totPresensi===0&&hasJadwalInRange){
+      totalPelanggaran++;
+      statusColor='#fcebeb';statusTextColor='#a32d2d';statusBorder='#f09595';statusLabel='🚨 Peringatan';
+      warnHtml='<div style="margin-top:8px;padding:6px 8px;background:#fcebeb;border:1px solid #f09595;border-radius:6px;font-size:10px;font-weight:600;color:#a32d2d">🚨 Ada jadwal tapi tidak ada presensi.</div>';
+    } else if(totJadwal>0&&totPresensi===0){
+      statusColor='#f5f5f3';statusTextColor='#666';statusBorder='#ddd';statusLabel='ℹ️ Belum aktif';
+    } else if(pAsinkron>=50){
+      statusColor='#fff4e5';statusTextColor='#854f0b';statusBorder='#fac775';statusLabel='⚠️ Teguran';
+      warnHtml='<div style="margin-top:8px;padding:6px 8px;background:#fff4e5;border:1px solid #fac775;border-radius:6px;font-size:10px;font-weight:600;color:#854f0b">⚠️ Asinkronus terlalu tinggi ('+pAsinkron+'%).</div>';
+    } else if(pHadir<60&&totPresensi>0){
+      statusColor='#faeeda';statusTextColor='#633806';statusBorder='#fac775';statusLabel='⏳ Perlu Perhatian';
     }
 
-    // Progress bar segmented
-    var segBar = totPresensi === 0 
-      ? '<div style="font-size:11px;color:#aaa;font-style:italic">Belum ada presensi</div>'
-      : '<div class="dc2-progress-wrap"><div class="dc2-progress-label"><span class="dc2-progress-lbl">Kehadiran (tepat / terlambat / sangat terlambat)</span><span class="dc2-progress-pct" style="color:'+( pHadir>=80?'#27500a':pHadir>=60?'#633806':'#a32d2d')+'">'+pHadir+'% tepat</span></div>'
-        +'<div class="dc2-bar-bg"><div class="dc2-bar-seg">'
-        +(dh?'<div class="dc2-seg" style="flex:'+dh+';background:#639922"></div>':'')
-        +(dk?'<div class="dc2-seg" style="flex:'+dk+';background:#BA7517"></div>':'')
-        +(dm?'<div class="dc2-seg" style="flex:'+dm+';background:#E24B4A"></div>':'')
-        +'</div></div>'
-        +'<div style="font-size:10px;color:#888;margin-top:3px;display:flex;gap:10px">'
-        +'<span style="color:#639922">● Tepat: '+dh+'x</span><span style="color:#BA7517">● Terlambat: '+dk+'x</span><span style="color:#E24B4A">● Sangat: '+dm+'x</span>'
-        +'</div></div>';
-
-    // Selesai progress
-    var selesaiBar = dsd.length === 0
-      ? ''
-      : '<div class="dc2-progress-wrap" style="margin-top:8px"><div class="dc2-progress-label"><span class="dc2-progress-lbl">Selesai tepat waktu</span><span class="dc2-progress-pct" style="color:#185fa5">'+pSelesai+'%</span></div>'
-        +'<div class="dc2-bar-bg"><div class="dc2-bar" style="width:'+pSelesai+'%;background:'+( pSelesai>=80?'#185fa5':'#E24B4A')+'"></div></div></div>';
-
-    var modeRow = totPresensi === 0 ? '' :
-      '<div class="dc2-mode-row">'
-      +'<div class="dc2-mode">🏫 Luring<b>'+dml+'x ('+pLuring+'%)</b></div>'
-      +'<div class="dc2-mode">💻 Sinkronus<b>'+dms+'x ('+pSinkron+'%)</b></div>'
-      +'<div class="dc2-mode">📝 Asinkronus<b>'+dma+'x ('+pAsinkron+'%)</b></div>'
+    // Progress bar hadir
+    var barHtml=totPresensi===0
+      ?'<div style="font-size:11px;color:#aaa;margin:8px 0 4px">Belum ada presensi</div>'
+      :'<div style="display:flex;height:8px;border-radius:20px;overflow:hidden;margin:8px 0 4px">'
+        +(dh?'<div style="flex:'+dh+';background:#639922"></div>':'')
+        +(dk?'<div style="flex:'+dk+';background:#BA7517"></div>':'')
+        +(dm?'<div style="flex:'+dm+';background:#E24B4A"></div>':'')
+        +'</div>';
+    var barLabel=totPresensi===0?'':
+      '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">'
+      +'<span style="font-size:10px;color:#888">✓ '+dh+'x tepat · '+dk+'x terlambat · '+dm+'x sangat terlambat</span>'
+      +'<span style="font-size:11px;font-weight:700;color:'+(pHadir>=80?'#27500a':pHadir>=60?'#633806':'#a32d2d')+'">'+pHadir+'%</span>'
       +'</div>';
 
-    var ac = avatarColor(d.nama);
-    var ini = initials(d.nama);
+    // Mode mini grid
+    var modeGrid=totPresensi===0?'':
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:3px;margin-top:6px">'
+      +'<div style="background:#f5f5f3;border-radius:5px;padding:4px 6px;font-size:10px;color:#555">🏫 Luring<br><b style="color:#1a1a1a">'+dml+'x ('+pLuring+'%)</b></div>'
+      +'<div style="background:#f5f5f3;border-radius:5px;padding:4px 6px;font-size:10px;color:#555">💻 Sinkronus<br><b style="color:#1a1a1a">'+dms+'x ('+pSinkron+'%)</b></div>'
+      +'<div style="background:#f5f5f3;border-radius:5px;padding:4px 6px;font-size:10px;color:#555">📝 Asinkronus<br><b style="color:#1a1a1a">'+dma+'x ('+pAsinkron+'%)</b></div>'
+      +'<div style="background:#f5f5f3;border-radius:5px;padding:4px 6px;font-size:10px;color:#555">🔄 Ganti Jadwal<br><b style="color:#1a1a1a">'+totGanti+'x ('+pGanti+'%)</b></div>'
+      +'</div>';
 
-    return '<div class="dc2">'
-      + '<div class="dc2-header">'
-      +   '<div class="dc2-avatar" style="background:'+ac+'">'+ini+'</div>'
-      +   '<div><div class="dc2-name">'+d.nama+'</div><div class="dc2-sub">'+totJadwal+' MK Terdaftar · '+totPresensi+'x Presensi · '+totGanti+'x Ganti</div></div>'
-      + '</div>'
-      + '<div class="dc2-badges">'+statusBadge+'</div>'
-      + segBar + selesaiBar + modeRow + warnHtml
-      + '</div>';
-  }).filter(Boolean).join('')||'<p class="empty">Belum ada data.</p>';
+    var ac=aColor(d.nama), ini=aInit(d.nama);
+    return '<div style="background:#fff;border:1px solid #e5e5e3;border-radius:14px;padding:14px;box-shadow:0 1px 4px rgba(0,0,0,.04)">'
+      // header
+      +'<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">'
+        +'<div style="width:36px;height:36px;border-radius:50%;background:'+ac+';color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0">'+ini+'</div>'
+        +'<div style="min-width:0">'
+          +'<div style="font-size:13px;font-weight:600;color:#1a1a1a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+d.nama+'</div>'
+          +'<div style="font-size:10px;color:#888;margin-top:1px">'+totJadwal+' MK · '+totPresensi+'x Presensi</div>'
+        +'</div>'
+      +'</div>'
+      // status badge
+      +'<div style="display:inline-block;padding:2px 10px;border-radius:20px;font-size:11px;font-weight:600;background:'+statusColor+';color:'+statusTextColor+';border:1px solid '+statusBorder+';margin-bottom:2px">'+statusLabel+'</div>'
+      // progress
+      + barHtml + barLabel + modeGrid + warnHtml
+      +'</div>';
+  }).filter(Boolean).join('')+'</div>'||'<p class="empty">Belum ada data.</p>';
 
   document.getElementById('tp-count').textContent = totalPelanggaran;
   document.getElementById('pelanggaran-banner').style.display = totalPelanggaran > 0 ? 'block' : 'none';
 
-  // Render Top 10 Leaderboard
-  renderTop10(data);
-
-  // MENGELOMPOKKAN DETAIL RIWAYAT BERDASARKAN TANGGAL
+  // DETAIL RIWAYAT — card per sesi, dikelompokkan per tanggal
   var groupedData = {};
   data.slice().reverse().forEach(function(p) {
     if(!groupedData[p.tanggal]) groupedData[p.tanggal] = [];
@@ -1394,24 +1361,83 @@ function renderR(){
     detHtml = '<p class="empty">Belum ada data pada rentang tanggal ini.</p>';
   } else {
     for(var tgl in groupedData) {
-      detHtml += '<div style="margin-top:1.5rem; margin-bottom:10px; padding-bottom:6px; border-bottom:2px solid #e5e5e3; font-weight:600; color:#1a1a1a; font-size:14px; display:flex; align-items:center; gap:8px;"><span>📅</span> Tanggal: ' + tgl + '</div>';
-      
+      // Header tanggal
+      detHtml += '<div style="display:flex;align-items:center;gap:8px;margin:12px 0 8px;padding-bottom:6px;border-bottom:2px solid #e5e5e3">'
+        +'<div style="width:32px;height:32px;border-radius:8px;background:#185fa5;color:#fff;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0">📅</div>'
+        +'<div style="font-size:13px;font-weight:700;color:#1a1a1a">'+tgl+'</div>'
+        +'<div style="font-size:11px;color:#888;margin-left:auto">'+groupedData[tgl].length+' sesi</div>'
+        +'</div>';
+
+      // Grid card sesi
+      detHtml += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">';
       detHtml += groupedData[tgl].map(function(p) {
-        var jt=jStr(p.jam)||p.jam;
-        var md=p.modeKuliah||'Luring';
-        var sb='';
-        
-        if(p.waktuSelesai) {
-          sb='<span class="badge '+(p.colorSelesai==='blue'?'green':p.colorSelesai==='red'?'red':'yellow')+'" style="font-size:11px">'+p.statusSelesai+'</span>';
+        var jt = jStr(p.jam)||p.jam;
+        var md = p.modeKuliah||'Luring';
+
+        // warna & label status hadir
+        var hadirBg = p.color==='green'?'#eaf3de':p.color==='yellow'?'#faeeda':'#fcebeb';
+        var hadirTx = p.color==='green'?'#27500a':p.color==='yellow'?'#633806':'#791f1f';
+
+        // status selesai
+        var selesaiHtml='';
+        if(p.waktuSelesai && p.waktuSelesai!=='') {
+          var sBg = p.colorSelesai==='blue'?'#e6f1fb':'#fcebeb';
+          var sTx = p.colorSelesai==='blue'?'#185fa5':'#791f1f';
+          selesaiHtml = '<div style="display:flex;align-items:center;justify-content:space-between;margin-top:6px;padding-top:6px;border-top:1px dashed #f0f0ee">'
+            +'<span style="font-size:10px;color:#888">Selesai</span>'
+            +'<div style="display:flex;align-items:center;gap:5px">'
+              +'<span style="font-size:11px;font-weight:600;color:#1a1a1a">'+p.waktuSelesai+'</span>'
+              +'<span style="font-size:10px;font-weight:600;padding:1px 6px;border-radius:20px;background:'+sBg+';color:'+sTx+'">'+p.statusSelesai+'</span>'
+            +'</div>'
+            +'</div>';
         } else {
-          sb='<span style="font-size:11px;color:#aaa">Selesai belum direkam</span>';
-          if(isAdmin) {
-            sb += '<button class="btn btn-sm btn-danger" style="padding:2px 8px; font-size:10px; margin-left:8px" onclick="tutupPaksa(\''+p.id+'\')">Tutup Paksa</button>';
-          }
+          var tutupBtn = isAdmin
+            ? '<button class="btn btn-sm btn-danger" style="padding:1px 7px;font-size:10px" onclick="tutupPaksa(\''+p.id+'\')">Tutup Paksa</button>'
+            : '';
+          selesaiHtml = '<div style="display:flex;align-items:center;justify-content:space-between;margin-top:6px;padding-top:6px;border-top:1px dashed #f0f0ee">'
+            +'<span style="font-size:10px;color:#aaa">Selesai belum direkam</span>'+tutupBtn
+            +'</div>';
         }
-        
-        return '<div class="entry"><div class="em"><div class="en">'+p.dosen+'</div><div class="es">'+p.mk+(p.kelas?' · '+p.kelas:'')+' · '+p.ruang+' <span class="badge mode-badge" style="font-size:10px; margin-left:4px">'+md+'</span></div><div class="es" style="margin-top:4px;display:flex;gap:6px;flex-wrap:wrap;align-items:center"><span>Jadwal: <b>'+jt+'</b></span><span>Hadir: <b>'+p.waktuHadir+'</b></span><span class="badge '+p.color+'" style="font-size:11px">'+p.status+(p.diff>0?' (+'+p.diff+' mnt)':'')+'</span>'+(p.waktuSelesai?'<span>Selesai: <b>'+p.waktuSelesai+'</b></span>':'')+sb+'</div></div></div>';
+
+        // mode badge
+        var modeBg='#f3e8ff',modeTx='#7e22ce';
+        if(md.indexOf('Luring')>-1){modeBg='#eaf3de';modeTx='#27500a';}
+        else if(md.indexOf('Sinkronus')>-1){modeBg='#e6f1fb';modeTx='#185fa5';}
+        else if(md.indexOf('Asinkronus')>-1){modeBg='#faeeda';modeTx='#633806';}
+
+        // avatar
+        var ac2=aColor(p.dosen), ini2=aInit(p.dosen);
+
+        return '<div style="background:#fff;border:1px solid #e5e5e3;border-radius:12px;padding:10px 12px;box-shadow:0 1px 3px rgba(0,0,0,.04)">'
+          // nama dosen row
+          +'<div style="display:flex;align-items:center;gap:7px;margin-bottom:8px">'
+            +'<div style="width:28px;height:28px;border-radius:50%;background:'+ac2+';color:#fff;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0">'+ini2+'</div>'
+            +'<div style="min-width:0">'
+              +'<div style="font-size:12px;font-weight:600;color:#1a1a1a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+p.dosen+'</div>'
+              +'<div style="font-size:10px;color:#888">'+p.mk+(p.kelas?' · '+p.kelas:'')+'</div>'
+            +'</div>'
+          +'</div>'
+          // info row
+          +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-bottom:6px">'
+            +'<div style="background:#f8f8f7;border-radius:6px;padding:4px 6px">'
+              +'<div style="font-size:9px;color:#aaa;text-transform:uppercase;letter-spacing:.04em">Ruang</div>'
+              +'<div style="font-size:11px;font-weight:600;color:#1a1a1a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+p.ruang+'</div>'
+            +'</div>'
+            +'<div style="background:#f8f8f7;border-radius:6px;padding:4px 6px">'
+              +'<div style="font-size:9px;color:#aaa;text-transform:uppercase;letter-spacing:.04em">Jadwal</div>'
+              +'<div style="font-size:11px;font-weight:600;color:#1a1a1a">'+jt+'</div>'
+            +'</div>'
+          +'</div>'
+          // hadir + mode badges
+          +'<div style="display:flex;align-items:center;gap:4px;flex-wrap:wrap">'
+            +'<span style="font-size:10px;color:#888">Hadir: <b style="color:#1a1a1a">'+p.waktuHadir+'</b></span>'
+            +'<span style="font-size:10px;font-weight:600;padding:1px 7px;border-radius:20px;background:'+hadirBg+';color:'+hadirTx+'">'+p.status+(p.diff>0?' +'+p.diff+'mnt':'')+'</span>'
+            +'<span style="font-size:10px;font-weight:500;padding:1px 7px;border-radius:20px;background:'+modeBg+';color:'+modeTx+'">'+md+'</span>'
+          +'</div>'
+          + selesaiHtml
+          +'</div>';
       }).join('');
+      detHtml += '</div>';
     }
   }
   document.getElementById('det').innerHTML = detHtml;
