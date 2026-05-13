@@ -1225,26 +1225,50 @@ function getHariInRange(start, end) {
 
 // FITUR KHUSUS WK I: Tutup Paksa Sesi
 async function tutupPaksa(id) {
-  // Token rahasia khusus
   var TOKEN_WKI = '1990'; 
   
   var inputToken = prompt('🛡️ OTORISASI DIBUTUHKAN:\nMasukkan Token Rahasia WK I untuk menutup paksa sesi ini:');
-  
   if (inputToken === null) return; 
-  
   if (inputToken !== TOKEN_WKI) {
     alert('❌ Akses Ditolak!\nToken salah. Anda tidak memiliki izin untuk melakukan tindakan ini.');
     return;
   }
-  
-  if (!confirm('Token Benar. Lanjutkan menutup paksa sesi ini?')) return;
+
+  // Cari data presensi untuk ambil jamSelesaiJadwal
+  var presensi = P.find(function(p){ return p.id === id; });
+  var jamSelesaiJadwal = presensi ? (presensi.jamSelesaiJadwal || '') : '';
+
+  // Hitung waktu selesai aktual (sekarang)
+  var now = new Date();
+  var ws = now.toLocaleTimeString('id-ID', {hour:'2-digit', minute:'2-digit'});
+
+  // Hitung status berdasarkan jam jadwal selesai (sama seperti logika stS)
+  var stl, stc;
+  if (!jamSelesaiJadwal || jamSelesaiJadwal.indexOf(':') < 0) {
+    // Tidak ada jam selesai jadwal — tandai netral tapi dengan keterangan ditutup admin
+    stl = 'Ditutup Admin (' + ws + ')';
+    stc = 'red';
+  } else {
+    var p2 = jamSelesaiJadwal.split(':');
+    var jh2 = +p2[0], jm2 = +p2[1];
+    var selisih = (now.getHours()*60 + now.getMinutes()) - (jh2*60 + jm2);
+    if (selisih >= -5) {
+      // Tepat waktu atau lewat jadwal (toleransi 5 menit lebih awal)
+      stl = 'Tepat waktu selesai (Tutup Admin)';
+      stc = 'blue';
+    } else {
+      // Pulang awal — masih sebelum jam selesai jadwal
+      stl = 'Pulang awal ' + Math.abs(selisih) + ' mnt (Tutup Admin)';
+      stc = 'red';
+    }
+  }
+
+  // Tampilkan konfirmasi dengan info status
+  var infoPresensi = presensi ? '\n👤 ' + presensi.dosen + '\n📚 ' + presensi.mk + '\n⏰ Jam selesai jadwal: ' + (jamSelesaiJadwal||'—') + '\n🕐 Waktu tutup: ' + ws + '\n📋 Status: ' + stl : '';
+  if (!confirm('Token Benar. Lanjutkan menutup paksa sesi ini?' + infoPresensi)) return;
   
   setSB('sy');
   try {
-    var ws = 'Ditutup Admin'; 
-    var stl = 'Selesai Paksa'; 
-    var stc = 'red'; 
-    
     await post({action:'updateSelesai', id:id, waktuSelesai:ws, statusSelesai:stl, colorSelesai:stc});
     
     var idx = P.findIndex(function(p){ return p.id === id; });
@@ -1252,7 +1276,7 @@ async function tutupPaksa(id) {
     
     setSB('ok');
     renderR(); 
-    alert('✅ Sesi berhasil ditutup paksa oleh WK I.');
+    alert('✅ Sesi berhasil ditutup.\nWaktu: ' + ws + '\nStatus: ' + stl);
   } catch(e) {
     setSB('er'); alert('Gagal: ' + e.message);
   }
