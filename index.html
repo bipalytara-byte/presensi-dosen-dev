@@ -342,6 +342,7 @@ tr:last-child td{border-bottom:none}
 
 <div id="page-report" class="page">
   
+  <!-- FILTER TANGGAL & EXPORT — tetap ada -->
   <div style="display:flex; justify-content:space-between; align-items:flex-end; margin-bottom:1rem; flex-wrap:wrap; gap:10px">
     <div class="row" style="flex:1; margin-bottom:0">
       <div class="field" style="margin-bottom:0">
@@ -358,6 +359,42 @@ tr:last-child td{border-bottom:none}
       </div>
     </div>
     <button class="btn btn-blue" onclick="exportExcel()" style="height:38px; display:flex; align-items:center; gap:6px; font-weight:500">📥 Export ke Excel</button>
+  </div>
+
+  <!-- FITUR 1: DASHBOARD RINGKASAN HARIAN -->
+  <div class="card" id="daily-dashboard-card">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+      <div class="sec" style="margin-bottom:0">☀️ Ringkasan Hari Ini</div>
+      <span id="daily-hari" style="font-size:12px;color:#888;font-weight:500"></span>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:10px">
+      <div style="background:#e6f1fb;border-radius:10px;padding:10px;text-align:center">
+        <div style="font-size:22px;font-weight:700;color:#185fa5" id="daily-jadwal">0</div>
+        <div style="font-size:11px;color:#185fa5;margin-top:2px">Jadwal Hari Ini</div>
+      </div>
+      <div style="background:#eaf3de;border-radius:10px;padding:10px;text-align:center">
+        <div style="font-size:22px;font-weight:700;color:#27500a" id="daily-hadir">0</div>
+        <div style="font-size:11px;color:#27500a;margin-top:2px">Sudah Presensi</div>
+      </div>
+      <div style="background:#fcebeb;border-radius:10px;padding:10px;text-align:center">
+        <div style="font-size:22px;font-weight:700;color:#a32d2d" id="daily-belum">0</div>
+        <div style="font-size:11px;color:#a32d2d;margin-top:2px">Belum Presensi</div>
+      </div>
+    </div>
+    <!-- Progress bar harian -->
+    <div style="background:#f0f0ee;border-radius:20px;height:8px;margin-bottom:6px;overflow:hidden">
+      <div id="daily-bar" style="height:8px;border-radius:20px;background:#639922;transition:width .5s ease;width:0%"></div>
+    </div>
+    <div style="font-size:11px;color:#888;margin-bottom:10px" id="daily-pct-label">Menghitung...</div>
+    <!-- Daftar dosen belum presensi hari ini -->
+    <div id="daily-belum-list"></div>
+  </div>
+
+  <!-- FITUR 2: ALERT ABSEN BERTURUT-TURUT -->
+  <div class="card" id="alert-absen-card" style="display:none">
+    <div class="sec" style="color:#a32d2d">🚨 Alert — Dosen Tidak Hadir Berturut-turut</div>
+    <div style="font-size:12px;color:#888;margin-bottom:10px">Dosen yang tidak tercatat presensi selama <b>2 minggu atau lebih</b> pada hari jadwalnya.</div>
+    <div id="alert-absen-list"></div>
   </div>
 
   <div class="stat-row">
@@ -398,7 +435,25 @@ tr:last-child td{border-bottom:none}
       </div>
     </div>
   </div>
-  <div class="card"><div class="sec">Rekap per dosen (Monitoring SP & Mode)</div><div id="bd"></div></div>
+
+  <!-- FITUR 3: TARGET KEHADIRAN per dosen (di dalam rekap per dosen) -->
+  <div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+      <div class="sec" style="margin-bottom:0">Rekap per dosen (Monitoring SP & Mode)</div>
+      <div style="display:flex;align-items:center;gap:6px">
+        <span style="font-size:11px;color:#888">Target kehadiran:</span>
+        <select id="target-pct" onchange="renderR()" style="width:auto;padding:3px 8px;font-size:12px;border-radius:6px">
+          <option value="70">≥ 70%</option>
+          <option value="75">≥ 75%</option>
+          <option value="80" selected>≥ 80%</option>
+          <option value="85">≥ 85%</option>
+          <option value="90">≥ 90%</option>
+        </select>
+      </div>
+    </div>
+    <div style="font-size:11px;color:#888;margin-bottom:12px">Indikator otomatis berdasarkan total jadwal vs total presensi pada periode yang dipilih.</div>
+    <div id="bd"></div>
+  </div>
   <div class="card"><div class="sec">Detail riwayat</div><div id="det"><p class="empty">Belum ada data.</p></div></div>
 </div>
 
@@ -1203,7 +1258,176 @@ async function tutupPaksa(id) {
   }
 }
 
+// =====================================================
+// FITUR 1: DASHBOARD RINGKASAN HARIAN
+// =====================================================
+function renderDailyDashboard() {
+  if(!isAdmin) { var c=document.getElementById('daily-dashboard-card'); if(c) c.style.display='none'; return; }
+  var HARI_ID = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
+  var now = new Date();
+  var hariIni = HARI_ID[now.getDay()];
+  var tglStr = now.toLocaleDateString('id-ID',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+
+  document.getElementById('daily-hari').textContent = tglStr;
+
+  // Jadwal yang ada hari ini
+  var jadwalHariIni = J.filter(function(j){ return j.hari === hariIni; });
+
+  // Presensi yang masuk hari ini
+  var tglFormatted = now.toLocaleDateString('id-ID',{day:'2-digit',month:'2-digit',year:'numeric'}).replace(/\//g,'/');
+  // Coba match berbagai format tanggal
+  var todayTs = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+  var presensiHariIni = P.filter(function(p){
+    return parseTanggal(p.tanggal) === todayTs;
+  });
+
+  // Dosen yang sudah presensi hari ini (unik per dosenId)
+  var dosenSudahIds = {};
+  presensiHariIni.forEach(function(p){ dosenSudahIds[p.dosenId] = true; });
+
+  // Dosen yang belum presensi (punya jadwal hari ini tapi belum ada di presensi hari ini)
+  var dosenBelum = jadwalHariIni.filter(function(j){
+    return !dosenSudahIds[j.dosenId];
+  });
+  // Unik per dosenId
+  var dosenBelumUniq = {}, dosenBelumList = [];
+  dosenBelum.forEach(function(j){
+    if(!dosenBelumUniq[j.dosenId]){
+      dosenBelumUniq[j.dosenId] = true;
+      var d = D.find(function(x){ return x.id===j.dosenId; });
+      if(d) dosenBelumList.push({ dosen: d, jadwal: j });
+    }
+  });
+
+  var totJadwal = Object.keys(
+    jadwalHariIni.reduce(function(acc,j){ acc[j.dosenId]=true; return acc; }, {})
+  ).length; // unik per dosen
+  var totHadir = Object.keys(dosenSudahIds).length;
+  var totBelum = dosenBelumList.length;
+  var pct = totJadwal > 0 ? Math.round((totHadir/totJadwal)*100) : 0;
+
+  document.getElementById('daily-jadwal').textContent = totJadwal;
+  document.getElementById('daily-hadir').textContent = totHadir;
+  document.getElementById('daily-belum').textContent = totBelum;
+  document.getElementById('daily-bar').style.width = pct+'%';
+  document.getElementById('daily-bar').style.background = pct>=80?'#639922':pct>=50?'#BA7517':'#E24B4A';
+  document.getElementById('daily-pct-label').textContent = pct+'% dosen sudah presensi hari ini ('+totHadir+' dari '+totJadwal+' yang memiliki jadwal)';
+
+  var AVATAR_PAL2=['#185fa5','#639922','#7c3aed','#c2410c','#0f766e','#b45309','#be123c','#1d4ed8'];
+  function aC(n){var c=0;for(var i=0;i<n.length;i++)c+=n.charCodeAt(i);return AVATAR_PAL2[c%AVATAR_PAL2.length];}
+  function aI(n){var p=n.trim().split(' ').filter(Boolean);return p.length===1?p[0].substring(0,2).toUpperCase():(p[0][0]+p[p.length-1][0]).toUpperCase();}
+
+  var listHtml = '';
+  if(dosenBelumList.length === 0) {
+    listHtml = '<div style="padding:10px;background:#eaf3de;border-radius:8px;font-size:12px;color:#27500a;font-weight:500;text-align:center">✅ Semua dosen yang memiliki jadwal hari ini sudah presensi!</div>';
+  } else {
+    listHtml = '<div style="font-size:11px;font-weight:600;color:#a32d2d;margin-bottom:6px">Belum presensi (' + dosenBelumList.length + ' dosen):</div>';
+    listHtml += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">';
+    listHtml += dosenBelumList.map(function(item){
+      var ac=aC(item.dosen.nama), ini=aI(item.dosen.nama);
+      return '<div style="display:flex;align-items:center;gap:8px;padding:7px 10px;background:#fff8f8;border:1px solid #f09595;border-radius:8px">'
+        +'<div style="width:28px;height:28px;border-radius:50%;background:'+ac+';color:#fff;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0">'+ini+'</div>'
+        +'<div style="min-width:0">'
+          +'<div style="font-size:11px;font-weight:600;color:#1a1a1a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+item.dosen.nama+'</div>'
+          +'<div style="font-size:10px;color:#888">'+item.jadwal.mk+' · '+item.jadwal.jamMulai+'</div>'
+        +'</div>'
+        +'</div>';
+    }).join('');
+    listHtml += '</div>';
+  }
+  document.getElementById('daily-belum-list').innerHTML = listHtml;
+}
+
+// =====================================================
+// FITUR 2: ALERT ABSEN BERTURUT-TURUT (≥ 2 minggu)
+// =====================================================
+function renderAlertAbsen() {
+  if(!isAdmin) { var c=document.getElementById('alert-absen-card'); if(c) c.style.display='none'; return; }
+  var MINGGU_MS = 7 * 24 * 60 * 60 * 1000;
+  var now = new Date(); now.setHours(0,0,0,0);
+  var batas = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000); // 2 minggu ke belakang
+
+  var AVATAR_PAL3=['#185fa5','#639922','#7c3aed','#c2410c','#0f766e','#b45309','#be123c','#1d4ed8'];
+  function aC3(n){var c=0;for(var i=0;i<n.length;i++)c+=n.charCodeAt(i);return AVATAR_PAL3[c%AVATAR_PAL3.length];}
+  function aI3(n){var p=n.trim().split(' ').filter(Boolean);return p.length===1?p[0].substring(0,2).toUpperCase():(p[0][0]+p[p.length-1][0]).toUpperCase();}
+
+  var alerts = [];
+  D.forEach(function(d){
+    var jd = J.filter(function(j){ return j.dosenId===d.id; });
+    if(jd.length === 0) return;
+
+    // Presensi dosen ini dalam 2 minggu terakhir
+    var presensiRecent = P.filter(function(p){
+      return p.dosenId===d.id && parseTanggal(p.tanggal) >= batas.getTime();
+    });
+
+    // Hitung berapa hari jadwal yang seharusnya ada dalam 2 minggu terakhir
+    var hariJadwal = jd.map(function(j){ return j.hari; });
+    var HARI_IDX = {Senin:1,Selasa:2,Rabu:3,Kamis:4,Jumat:5,Sabtu:6};
+    var expectedDates = [];
+    for(var i=14; i>=1; i--) {
+      var d2 = new Date(now.getTime() - i*24*60*60*1000);
+      var HARI_NAME = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'][d2.getDay()];
+      if(hariJadwal.indexOf(HARI_NAME) > -1) expectedDates.push(d2.getTime());
+    }
+
+    if(expectedDates.length === 0) return; // tidak ada jadwal dalam 2 minggu
+
+    // Cek apakah ada presensi sama sekali dalam 2 minggu
+    if(presensiRecent.length === 0 && expectedDates.length >= 2) {
+      // Cari presensi terakhir kapan
+      var allPresensidosen = P.filter(function(p){ return p.dosenId===d.id; });
+      var lastPresensi = allPresensidosen.length > 0
+        ? allPresensidosen.reduce(function(latest, p){
+            return parseTanggal(p.tanggal) > parseTanggal(latest.tanggal) ? p : latest;
+          })
+        : null;
+
+      var selisihHari = lastPresensi
+        ? Math.floor((now.getTime() - parseTanggal(lastPresensi.tanggal)) / (24*60*60*1000))
+        : null;
+
+      alerts.push({
+        dosen: d,
+        expectedCount: expectedDates.length,
+        lastPresensi: lastPresensi,
+        selisihHari: selisihHari
+      });
+    }
+  });
+
+  var card = document.getElementById('alert-absen-card');
+  var listEl = document.getElementById('alert-absen-list');
+
+  if(alerts.length === 0) {
+    card.style.display = 'none';
+    return;
+  }
+
+  card.style.display = 'block';
+  listEl.innerHTML = '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">'
+    + alerts.map(function(a){
+        var ac=aC3(a.dosen.nama), ini=aI3(a.dosen.nama);
+        var lastTgl = a.lastPresensi ? a.lastPresensi.tanggal + ' ('+a.selisihHari+' hari lalu)' : 'Belum pernah presensi';
+        return '<div style="background:#fff8f8;border:1px solid #f09595;border-radius:10px;padding:10px 12px">'
+          +'<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">'
+            +'<div style="width:32px;height:32px;border-radius:50%;background:'+ac+';color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0">'+ini+'</div>'
+            +'<div><div style="font-size:12px;font-weight:700;color:#a32d2d">'+a.dosen.nama+'</div>'
+            +'<div style="font-size:10px;color:#888">'+a.expectedCount+'x jadwal tidak hadir (2 mgg)</div></div>'
+          +'</div>'
+          +'<div style="font-size:10px;color:#888;padding:5px 8px;background:#fff;border-radius:6px;border:1px solid #f09595">'
+            +'📅 Terakhir presensi: <b style="color:#a32d2d">'+lastTgl+'</b>'
+          +'</div>'
+          +'</div>';
+    }).join('')
+    +'</div>';
+}
+
 function renderR(){
+  // Fitur 1 & 2: selalu render berdasarkan data real-time (bukan filter tanggal)
+  renderDailyDashboard();
+  renderAlertAbsen();
+
   var start=document.getElementById('r-start').value;
   var end=document.getElementById('r-end').value;
   var df=document.getElementById('rd').value;
@@ -1268,6 +1492,9 @@ function renderR(){
   function aColor(n){var c=0;for(var i=0;i<n.length;i++)c+=n.charCodeAt(i);return AVATAR_PAL[c%AVATAR_PAL.length];}
   function aInit(n){var p=n.trim().split(' ').filter(Boolean);return p.length===1?p[0].substring(0,2).toUpperCase():(p[0][0]+p[p.length-1][0]).toUpperCase();}
 
+  var targetEl = document.getElementById('target-pct');
+  var TARGET_PCT = targetEl ? parseInt(targetEl.value) : 80;
+
   var ds=df==='all'?D:D.filter(function(d){return d.id===df;});
   document.getElementById('bd').innerHTML='<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">'+ds.map(function(d){
     var dd=data.filter(function(p){return p.dosenId===d.id;});
@@ -1329,6 +1556,27 @@ function renderR(){
       +'<div style="background:#f5f5f3;border-radius:5px;padding:4px 6px;font-size:10px;color:#555">🔄 Ganti Jadwal<br><b style="color:#1a1a1a">'+totGanti+'x ('+pGanti+'%)</b></div>'
       +'</div>';
 
+    // FITUR 3: Target Kehadiran — hitung estimasi total sesi dari jadwal di rentang tanggal
+    // Hitung jumlah sesi yang seharusnya terjadi berdasarkan jadwal & rentang filter
+    var hariAdaJadwal = jd.filter(function(j){ return daysInRange.indexOf(j.hari)>-1; });
+    // Estimasi pertemuan: jika ada rentang tanggal, hitung minggu; jika tidak, gunakan total presensi + jadwal per minggu sebagai referensi
+    var estimasiSesi = 0;
+    if(start && end) {
+      var msRange = new Date(end).getTime() - new Date(start).getTime();
+      var minggu = Math.ceil(msRange / (7*24*60*60*1000)) || 1;
+      estimasiSesi = hariAdaJadwal.length * minggu;
+    } else {
+      // Tanpa rentang: gunakan jumlah presensi + pelanggaran sebagai proxy
+      estimasiSesi = totPresensi + (hasJadwalInRange && totPresensi===0 ? hariAdaJadwal.length : 0);
+    }
+    var pTarget = estimasiSesi > 0 ? Math.round((totPresensi/estimasiSesi)*100) : (totPresensi>0?100:0);
+    var memenuhi = pTarget >= TARGET_PCT;
+    var targetBadge = totPresensi===0 ? '' :
+      '<div style="margin-top:7px;padding:5px 8px;border-radius:7px;font-size:10px;font-weight:600;display:flex;align-items:center;justify-content:space-between;background:'+(memenuhi?'#eaf3de':'#fcebeb')+';border:1px solid '+(memenuhi?'#97c459':'#f09595')+';color:'+(memenuhi?'#27500a':'#a32d2d')+'">'
+        +'<span>'+(memenuhi?'✅':'❌')+' Target ≥'+TARGET_PCT+'%</span>'
+        +'<span style="font-size:11px">'+pTarget+'% ('+totPresensi+'/'+(estimasiSesi||'-')+'x)</span>'
+        +'</div>';
+
     var ac=aColor(d.nama), ini=aInit(d.nama);
     return '<div style="background:#fff;border:1px solid #e5e5e3;border-radius:14px;padding:14px;box-shadow:0 1px 4px rgba(0,0,0,.04)">'
       // header
@@ -1341,8 +1589,8 @@ function renderR(){
       +'</div>'
       // status badge
       +'<div style="display:inline-block;padding:2px 10px;border-radius:20px;font-size:11px;font-weight:600;background:'+statusColor+';color:'+statusTextColor+';border:1px solid '+statusBorder+';margin-bottom:2px">'+statusLabel+'</div>'
-      // progress
-      + barHtml + barLabel + modeGrid + warnHtml
+      // progress + target
+      + barHtml + barLabel + modeGrid + targetBadge + warnHtml
       +'</div>';
   }).filter(Boolean).join('')+'</div>'||'<p class="empty">Belum ada data.</p>';
 
@@ -1671,6 +1919,9 @@ function fillAll(){
   renderRiwayatSaya();
   updateUserUI();
   cekNotifGanti();
+  // Fitur monitoring: render setelah data siap
+  renderDailyDashboard();
+  renderAlertAbsen();
 }
 
 function pg(p,btn){
