@@ -91,6 +91,50 @@ tr:last-child td{border-bottom:none}
 .app-footer {text-align: center;font-size: 12px;color: #aaa;margin-top: 2rem;padding-top: 1rem;border-top: 1px solid #e5e5e3;line-height: 1.6;}
 .app-footer b { color: #888; }
 .version-tag { font-size: 10px; color: #bbb; margin-top: 4px; display: inline-block; font-weight: 500; letter-spacing: 0.05em; }
+
+/* ===== TOP 10 LEADERBOARD ===== */
+.lb-tabs{display:flex;gap:4px;margin-bottom:12px;background:#f5f5f3;border-radius:10px;padding:3px}
+.lb-tab{flex:1;padding:7px 10px;text-align:center;font-size:12px;font-weight:500;cursor:pointer;border-radius:8px;border:none;background:none;color:#888;font-family:inherit}
+.lb-tab.active{background:#fff;color:#1a1a1a;box-shadow:0 1px 4px rgba(0,0,0,.1)}
+.lb-panel{display:none}.lb-panel.active{display:block}
+.lb-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #f0f0ee}
+.lb-row:last-child{border-bottom:none}
+.lb-rank{font-size:18px;width:28px;text-align:center;flex-shrink:0}
+.lb-rank-num{width:28px;text-align:center;flex-shrink:0;font-size:13px;font-weight:600;color:#888}
+.lb-avatar{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;flex-shrink:0}
+.lb-info{flex:1;min-width:0}
+.lb-name{font-size:13px;font-weight:600;color:#1a1a1a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lb-sub{font-size:11px;color:#888;margin-top:1px}
+.lb-bar-wrap{flex:1;background:#f0f0ee;border-radius:20px;height:8px;min-width:60px}
+.lb-bar{height:8px;border-radius:20px;transition:width .4s ease}
+.lb-pct{font-size:13px;font-weight:700;width:40px;text-align:right;flex-shrink:0}
+
+/* ===== DOSEN CARD (redesign) ===== */
+.dc2{background:#fff;border:1px solid #e5e5e3;border-radius:14px;padding:1rem 1.1rem;margin-bottom:10px;box-shadow:0 1px 4px rgba(0,0,0,.04)}
+.dc2-header{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.dc2-avatar{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;color:#fff;flex-shrink:0}
+.dc2-name{font-size:14px;font-weight:600;color:#1a1a1a;line-height:1.3}
+.dc2-sub{font-size:11px;color:#888;margin-top:1px}
+.dc2-badges{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:10px}
+.dc2-badge{display:inline-flex;align-items:center;gap:3px;font-size:11px;font-weight:500;padding:2px 8px;border-radius:20px;border:1px solid transparent}
+.dc2-stats{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px}
+.dc2-stat{background:#f8f8f7;border-radius:8px;padding:7px 10px;display:flex;align-items:center;gap:6px}
+.dc2-stat-icon{font-size:14px}
+.dc2-stat-info{}
+.dc2-stat-val{font-size:13px;font-weight:700;color:#1a1a1a;line-height:1.2}
+.dc2-stat-lbl{font-size:10px;color:#888;line-height:1.2}
+.dc2-progress-wrap{margin-bottom:6px}
+.dc2-progress-label{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px}
+.dc2-progress-lbl{font-size:11px;color:#888;font-weight:500}
+.dc2-progress-pct{font-size:12px;font-weight:700}
+.dc2-bar-bg{background:#f0f0ee;border-radius:20px;height:10px;overflow:hidden}
+.dc2-bar{height:10px;border-radius:20px}
+.dc2-bar-seg{display:flex;height:10px;border-radius:20px;overflow:hidden}
+.dc2-seg{height:10px}
+.dc2-mode-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px;margin-top:8px}
+.dc2-mode{background:#f8f8f7;border-radius:6px;padding:5px 6px;text-align:center;font-size:10px;color:#888}
+.dc2-mode b{display:block;font-size:12px;font-weight:700;color:#1a1a1a}
+.dc2-warn{margin-top:8px;padding:7px 10px;border-radius:8px;font-size:11px;font-weight:600;display:flex;align-items:center;gap:6px}
 </style>
 </head>
 <body>
@@ -354,6 +398,17 @@ tr:last-child td{border-bottom:none}
       </div>
     </div>
   </div>
+  <!-- TOP 10 LEADERBOARD -->
+  <div class="card" id="top10-card">
+    <div class="sec">🏆 Top 10 Dosen Terdisiplin</div>
+    <div class="lb-tabs">
+      <button class="lb-tab active" onclick="switchLbTab('hadir',this)">⏰ Tepat Waktu Hadir</button>
+      <button class="lb-tab" onclick="switchLbTab('selesai',this)">✅ Selesai Tepat Waktu</button>
+    </div>
+    <div class="lb-panel active" id="lb-hadir"><p class="empty">Memuat data...</p></div>
+    <div class="lb-panel" id="lb-selesai"><p class="empty">Memuat data...</p></div>
+  </div>
+
   <div class="card"><div class="sec">Rekap per dosen (Monitoring SP & Mode)</div><div id="bd"></div></div>
   <div class="card"><div class="sec">Detail riwayat</div><div id="det"><p class="empty">Belum ada data.</p></div></div>
 </div>
@@ -1220,13 +1275,23 @@ function renderR(){
   
   var totalPelanggaran = 0;
 
+  var AVATAR_COLORS = ['#185fa5','#639922','#7c3aed','#c2410c','#0f766e','#b45309','#be123c','#1d4ed8','#065f46','#6d28d9','#92400e','#155e75'];
+  function avatarColor(nama) {
+    var code = 0; for(var i=0;i<nama.length;i++) code += nama.charCodeAt(i);
+    return AVATAR_COLORS[code % AVATAR_COLORS.length];
+  }
+  function initials(nama) {
+    var parts = nama.trim().split(' ').filter(Boolean);
+    if(parts.length === 1) return parts[0].substring(0,2).toUpperCase();
+    return (parts[0][0] + parts[parts.length-1][0]).toUpperCase();
+  }
+
   var ds=df==='all'?D:D.filter(function(d){return d.id===df;});
   document.getElementById('bd').innerHTML=ds.map(function(d){
     var dd=data.filter(function(p){return p.dosenId===d.id;});
     var jd=J.filter(function(j){return j.dosenId===d.id;});
-    
     var dg=gf.filter(function(g){return g.dosenId===d.id && g.statusAcc==='Disetujui';});
-    
+
     var totJadwal = jd.length;
     var totPresensi = dd.length;
     var totGanti = dg.length;
@@ -1242,53 +1307,80 @@ function renderR(){
     var dsd=dd.filter(function(p){return p.waktuSelesai&&p.waktuSelesai!=='';});
     var dsh=dsd.filter(function(p){return p.colorSelesai==='blue';}).length;
     var dsm=dsd.filter(function(p){return p.colorSelesai==='red';}).length;
-    var dsn=totPresensi-dsd.length;
 
     var dml = dd.filter(function(p){return !p.modeKuliah || p.modeKuliah.indexOf('Luring')>-1;}).length;
     var dms = dd.filter(function(p){return p.modeKuliah && p.modeKuliah.indexOf('Sinkronus')>-1 && p.modeKuliah.indexOf('Asinkronus')===-1;}).length;
     var dma = dd.filter(function(p){return p.modeKuliah && p.modeKuliah.indexOf('Asinkronus')>-1;}).length;
 
+    var pHadir = totPresensi ? Math.round((dh/totPresensi)*100) : 0;
+    var pSelesai = dsd.length ? Math.round((dsh/dsd.length)*100) : 0;
     var pLuring = totPresensi ? Math.round((dml/totPresensi)*100) : 0;
     var pSinkron = totPresensi ? Math.round((dms/totPresensi)*100) : 0;
     var pAsinkron = totPresensi ? Math.round((dma/totPresensi)*100) : 0;
-    var pGanti = totPresensi ? Math.round((totGanti/totPresensi)*100) : 0;
 
-    var warningHtml = '';
+    // Status badge
+    var statusBadge='', warnHtml='';
     if(totJadwal > 0 && totPresensi === 0) {
       if(hasJadwalInRange) {
         totalPelanggaran++;
-        warningHtml += '<div style="margin-top:8px;padding:8px;background:#fcebeb;border:1px solid #f09595;border-radius:6px;font-size:11px;font-weight:600;color:#a32d2d;display:flex;align-items:center;gap:6px"><span>🚨</span> PERINGATAN: Ada jadwal mengajar, tapi tidak ada presensi.</div>';
+        statusBadge='<span class="dc2-badge" style="background:#fcebeb;color:#a32d2d;border-color:#f09595">🚨 Peringatan</span>';
+        warnHtml='<div class="dc2-warn" style="background:#fcebeb;border:1px solid #f09595;color:#a32d2d">🚨 Ada jadwal mengajar tapi tidak ada presensi tercatat.</div>';
       } else {
-        warningHtml += '<div style="margin-top:8px;padding:8px;background:#f5f5f5;border:1px solid #ddd;border-radius:6px;font-size:11px;font-weight:600;color:#666;display:flex;align-items:center;gap:6px"><span>ℹ️</span> Aman (Belum menggunakan aplikasi karena kemungkinan tidak ada jam mengajar di rentang ini).</div>';
+        statusBadge='<span class="dc2-badge" style="background:#f5f5f3;color:#666;border-color:#ddd">ℹ️ Belum aktif</span>';
       }
     } else if(pAsinkron >= 50) {
-      warningHtml += '<div style="margin-top:8px;padding:8px;background:#fff4e5;border:1px solid #fac775;border-radius:6px;font-size:11px;font-weight:600;color:#854f0b;display:flex;align-items:center;gap:6px"><span>⚠️</span> Teguran: Mode Asinkronus / Penugasan sangat tinggi ('+pAsinkron+'%).</div>';
+      statusBadge='<span class="dc2-badge" style="background:#fff4e5;color:#854f0b;border-color:#fac775">⚠️ Teguran Asinkronus</span>';
+      warnHtml='<div class="dc2-warn" style="background:#fff4e5;border:1px solid #fac775;color:#854f0b">⚠️ Mode Asinkronus / Penugasan sangat tinggi ('+pAsinkron+'%).</div>';
+    } else if(pHadir >= 80) {
+      statusBadge='<span class="dc2-badge" style="background:#eaf3de;color:#27500a;border-color:#97c459">✅ Disiplin</span>';
+    } else {
+      statusBadge='<span class="dc2-badge" style="background:#f5f5f3;color:#555;border-color:#ddd">— Normal</span>';
     }
 
-    var statPresensi = totPresensi === 0 
-      ? '<div style="font-size:11px;color:#a32d2d;margin-bottom:6px;font-weight:500">0x presensi tercatat dalam periode ini</div>'
-      : '<div style="display:flex;gap:2px;height:14px;border-radius:20px;overflow:hidden;margin-bottom:2px">'+(dh?'<div style="flex:'+dh+';background:#639922"></div>':'')+(dk?'<div style="flex:'+dk+';background:#BA7517"></div>':'')+(dm?'<div style="flex:'+dm+';background:#E24B4A"></div>':'')+'</div><div style="font-size:11px;color:#888;margin-bottom:6px">Hadir: '+dh+'x tepat · '+dk+'x terlambat · '+dm+'x sangat ('+totPresensi+'x total)</div>';
+    // Progress bar segmented
+    var segBar = totPresensi === 0 
+      ? '<div style="font-size:11px;color:#aaa;font-style:italic">Belum ada presensi</div>'
+      : '<div class="dc2-progress-wrap"><div class="dc2-progress-label"><span class="dc2-progress-lbl">Kehadiran (tepat / terlambat / sangat terlambat)</span><span class="dc2-progress-pct" style="color:'+( pHadir>=80?'#27500a':pHadir>=60?'#633806':'#a32d2d')+'">'+pHadir+'% tepat</span></div>'
+        +'<div class="dc2-bar-bg"><div class="dc2-bar-seg">'
+        +(dh?'<div class="dc2-seg" style="flex:'+dh+';background:#639922"></div>':'')
+        +(dk?'<div class="dc2-seg" style="flex:'+dk+';background:#BA7517"></div>':'')
+        +(dm?'<div class="dc2-seg" style="flex:'+dm+';background:#E24B4A"></div>':'')
+        +'</div></div>'
+        +'<div style="font-size:10px;color:#888;margin-top:3px;display:flex;gap:10px">'
+        +'<span style="color:#639922">● Tepat: '+dh+'x</span><span style="color:#BA7517">● Terlambat: '+dk+'x</span><span style="color:#E24B4A">● Sangat: '+dm+'x</span>'
+        +'</div></div>';
 
-    var statMode = totPresensi === 0 ? '' : 
-      '<div style="font-size:11px;color:#888;margin-bottom:2px;margin-top:6px;font-weight:500">Mode & Perubahan Jadwal:</div>' +
-      '<div style="font-size:11px;color:#555;display:grid;grid-template-columns:1fr 1fr;gap:4px;background:#f9f9f9;padding:6px;border-radius:6px;border:1px solid #eee">'+
-        '<div>🏫 Luring: <b>'+dml+'x ('+pLuring+'%)</b></div>'+
-        '<div>💻 Sinkronus: <b>'+dms+'x ('+pSinkron+'%)</b></div>'+
-        '<div>📝 Asinkronus: <b>'+dma+'x ('+pAsinkron+'%)</b></div>'+
-        '<div>🔄 Ganti Jadwal: <b>'+totGanti+'x ('+pGanti+'%)</b></div>'+
-      '</div>';
+    // Selesai progress
+    var selesaiBar = dsd.length === 0
+      ? ''
+      : '<div class="dc2-progress-wrap" style="margin-top:8px"><div class="dc2-progress-label"><span class="dc2-progress-lbl">Selesai tepat waktu</span><span class="dc2-progress-pct" style="color:#185fa5">'+pSelesai+'%</span></div>'
+        +'<div class="dc2-bar-bg"><div class="dc2-bar" style="width:'+pSelesai+'%;background:'+( pSelesai>=80?'#185fa5':'#E24B4A')+'"></div></div></div>';
 
-    return '<div style="margin-bottom:16px; padding-bottom:16px; border-bottom:1px solid #f0f0ee">'+
-             '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">'+
-               '<div style="font-size:14px;font-weight:600;color:#1a1a1a">'+d.nama+'</div>'+
-               '<div style="font-size:11px;background:#f5f5f3;padding:2px 8px;border-radius:20px;color:#666;border:1px solid #e5e5e3">'+totJadwal+' MK Terdaftar</div>'+
-             '</div>'+
-             statPresensi + statMode + warningHtml +
-           '</div>';
+    var modeRow = totPresensi === 0 ? '' :
+      '<div class="dc2-mode-row">'
+      +'<div class="dc2-mode">🏫 Luring<b>'+dml+'x ('+pLuring+'%)</b></div>'
+      +'<div class="dc2-mode">💻 Sinkronus<b>'+dms+'x ('+pSinkron+'%)</b></div>'
+      +'<div class="dc2-mode">📝 Asinkronus<b>'+dma+'x ('+pAsinkron+'%)</b></div>'
+      +'</div>';
+
+    var ac = avatarColor(d.nama);
+    var ini = initials(d.nama);
+
+    return '<div class="dc2">'
+      + '<div class="dc2-header">'
+      +   '<div class="dc2-avatar" style="background:'+ac+'">'+ini+'</div>'
+      +   '<div><div class="dc2-name">'+d.nama+'</div><div class="dc2-sub">'+totJadwal+' MK Terdaftar · '+totPresensi+'x Presensi · '+totGanti+'x Ganti</div></div>'
+      + '</div>'
+      + '<div class="dc2-badges">'+statusBadge+'</div>'
+      + segBar + selesaiBar + modeRow + warnHtml
+      + '</div>';
   }).filter(Boolean).join('')||'<p class="empty">Belum ada data.</p>';
 
   document.getElementById('tp-count').textContent = totalPelanggaran;
   document.getElementById('pelanggaran-banner').style.display = totalPelanggaran > 0 ? 'block' : 'none';
+
+  // Render Top 10 Leaderboard
+  renderTop10(data);
 
   // MENGELOMPOKKAN DETAIL RIWAYAT BERDASARKAN TANGGAL
   var groupedData = {};
@@ -1446,6 +1538,60 @@ function exportExcel() {
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
+}
+
+function switchLbTab(tab, btn) {
+  document.querySelectorAll('.lb-tab').forEach(function(b){ b.classList.remove('active'); });
+  document.querySelectorAll('.lb-panel').forEach(function(p){ p.classList.remove('active'); });
+  btn.classList.add('active');
+  document.getElementById('lb-'+tab).classList.add('active');
+}
+
+var _lastTop10Data = [];
+function renderTop10(data) {
+  _lastTop10Data = data;
+  var AVATAR_COLORS2 = ['#185fa5','#639922','#7c3aed','#c2410c','#0f766e','#b45309','#be123c','#1d4ed8','#065f46','#6d28d9'];
+  function ac2(nama) { var c=0;for(var i=0;i<nama.length;i++)c+=nama.charCodeAt(i);return AVATAR_COLORS2[c%AVATAR_COLORS2.length]; }
+  function ini2(nama) { var p=nama.trim().split(' ').filter(Boolean);return p.length===1?p[0].substring(0,2).toUpperCase():(p[0][0]+p[p.length-1][0]).toUpperCase(); }
+
+  var medals = ['🥇','🥈','🥉'];
+
+  // TOP 10 HADIR TEPAT
+  var hadirList = D.map(function(d) {
+    var dd = data.filter(function(p){ return p.dosenId===d.id; });
+    if(dd.length < 2) return null; // min 2 sesi agar bermakna
+    var dh = dd.filter(function(p){ return p.color==='green'; }).length;
+    var pct = Math.round((dh/dd.length)*100);
+    return { nama: d.nama, pct: pct, total: dd.length, tepat: dh };
+  }).filter(Boolean).sort(function(a,b){ return b.pct-a.pct || b.tepat-a.tepat; }).slice(0,10);
+
+  // TOP 10 SELESAI TEPAT
+  var selesaiList = D.map(function(d) {
+    var dd = data.filter(function(p){ return p.dosenId===d.id && p.waktuSelesai && p.waktuSelesai!==''; });
+    if(dd.length < 2) return null;
+    var dsh = dd.filter(function(p){ return p.colorSelesai==='blue'; }).length;
+    var pct = Math.round((dsh/dd.length)*100);
+    return { nama: d.nama, pct: pct, total: dd.length, tepat: dsh };
+  }).filter(Boolean).sort(function(a,b){ return b.pct-a.pct || b.tepat-a.tepat; }).slice(0,10);
+
+  function renderList(list, unit) {
+    if(list.length === 0) return '<p class="empty">Belum cukup data untuk ditampilkan (min. 2 sesi per dosen).</p>';
+    return list.map(function(item, i) {
+      var color = i===0?'#f59e0b':i===1?'#9ca3af':i===2?'#cd7c41':ac2(item.nama);
+      var rank = i < 3 ? '<span class="lb-rank">'+medals[i]+'</span>' : '<span class="lb-rank-num">#'+(i+1)+'</span>';
+      var barColor = item.pct>=80?'#639922':item.pct>=60?'#BA7517':'#E24B4A';
+      return '<div class="lb-row">'
+        + rank
+        + '<div class="lb-avatar" style="background:'+color+'">'+ini2(item.nama)+'</div>'
+        + '<div class="lb-info"><div class="lb-name">'+item.nama+'</div><div class="lb-sub">'+item.tepat+'x tepat dari '+item.total+'x '+unit+'</div></div>'
+        + '<div class="lb-bar-wrap"><div class="lb-bar" style="width:'+item.pct+'%;background:'+barColor+'"></div></div>'
+        + '<div class="lb-pct" style="color:'+barColor+'">'+item.pct+'%</div>'
+        + '</div>';
+    }).join('');
+  }
+
+  document.getElementById('lb-hadir').innerHTML = renderList(hadirList, 'hadir');
+  document.getElementById('lb-selesai').innerHTML = renderList(selesaiList, 'selesai');
 }
 
 function donut(id,sl,tot){
