@@ -109,7 +109,19 @@ tr:last-child td{border-bottom:none}
 .lb-bar{height:8px;border-radius:20px;transition:width .4s ease}
 .lb-pct{font-size:13px;font-weight:700;width:40px;text-align:right;flex-shrink:0}
 
-/* ===== DOSEN CARD (redesign) ===== */
+/* ===== FITUR PRIORITAS SEDANG ===== */
+/* Tren bulanan chart */
+.tren-bar-wrap{display:flex;align-items:flex-end;gap:3px;height:70px;padding:0 2px}
+.tren-bar-col{display:flex;flex-direction:column;align-items:center;flex:1;gap:2px}
+.tren-bar{width:100%;border-radius:4px 4px 0 0;transition:height .4s ease;min-height:2px}
+.tren-lbl{font-size:9px;color:#888;white-space:nowrap}
+.tren-pct{font-size:9px;font-weight:700}
+/* Riwayat ganti jadwal per dosen */
+.ganti-card{background:#fff;border:1px solid #e5e5e3;border-radius:12px;padding:12px 14px;margin-bottom:8px}
+.ganti-status{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;padding:2px 8px;border-radius:20px}
+/* Terlambat rata-rata bar */
+.lat-bar{height:8px;border-radius:20px;background:#BA7517;transition:width .4s}
+</style>
 .dc2{background:#fff;border:1px solid #e5e5e3;border-radius:14px;padding:1rem 1.1rem;margin-bottom:10px;box-shadow:0 1px 4px rgba(0,0,0,.04)}
 .dc2-header{display:flex;align-items:center;gap:10px;margin-bottom:10px}
 .dc2-avatar{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;color:#fff;flex-shrink:0}
@@ -434,6 +446,51 @@ tr:last-child td{border-bottom:none}
         <div class="li"><div class="dot" style="background:#ccc"></div><span id="lsn">Belum direkam: 0</span></div>
       </div>
     </div>
+  </div>
+
+  <!-- FITUR 4: RATA-RATA KETERLAMBATAN PER DOSEN -->
+  <div class="card" id="card-terlambat">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+      <div class="sec" style="margin-bottom:0">⏱️ Rata-rata Keterlambatan Hadir</div>
+      <span style="font-size:11px;color:#888">Hanya dosen yang pernah terlambat</span>
+    </div>
+    <div id="list-terlambat"><p class="empty">Belum ada data.</p></div>
+  </div>
+
+  <!-- FITUR 5: GRAFIK TREN KEHADIRAN BULANAN -->
+  <div class="card" id="card-tren">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+      <div class="sec" style="margin-bottom:0">📈 Tren Kehadiran Bulanan</div>
+      <select id="tren-dosen" onchange="renderTren()" style="width:auto;padding:3px 8px;font-size:12px;border-radius:6px">
+        <option value="all">Semua dosen</option>
+      </select>
+    </div>
+    <div style="font-size:11px;color:#888;margin-bottom:12px">% tepat waktu hadir per bulan (Jan–Des)</div>
+    <div id="tren-chart"></div>
+    <div style="display:flex;gap:10px;margin-top:8px;flex-wrap:wrap">
+      <span style="font-size:10px;color:#888;display:flex;align-items:center;gap:4px"><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#639922"></span>≥80% Baik</span>
+      <span style="font-size:10px;color:#888;display:flex;align-items:center;gap:4px"><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#BA7517"></span>60–79%</span>
+      <span style="font-size:10px;color:#888;display:flex;align-items:center;gap:4px"><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#E24B4A"></span>&lt;60% Perlu Perhatian</span>
+      <span style="font-size:10px;color:#888;display:flex;align-items:center;gap:4px"><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#e5e5e3"></span>Tidak ada jadwal</span>
+    </div>
+  </div>
+
+  <!-- FITUR 6: ALERT GANTI JADWAL MENUMPUK -->
+  <div class="card" id="card-ganti-alert" style="display:none">
+    <div class="sec" style="color:#854f0b">⚠️ Ganti Jadwal Menumpuk (≥3x dalam sebulan)</div>
+    <div style="font-size:12px;color:#888;margin-bottom:10px">Dosen yang sering mengajukan penggantian jadwal — perlu tindak lanjut akademik.</div>
+    <div id="list-ganti-alert"></div>
+  </div>
+
+  <!-- FITUR 7: RIWAYAT GANTI JADWAL PER DOSEN -->
+  <div class="card" id="card-riwayat-ganti">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+      <div class="sec" style="margin-bottom:0">🔄 Riwayat Ganti Jadwal</div>
+      <select id="filter-ganti-dosen" onchange="renderRiwayatGanti()" style="width:auto;padding:3px 8px;font-size:12px;border-radius:6px">
+        <option value="all">Semua dosen</option>
+      </select>
+    </div>
+    <div id="list-riwayat-ganti"><p class="empty">Belum ada data.</p></div>
   </div>
 
   <!-- FITUR 3: TARGET KEHADIRAN per dosen (di dalam rekap per dosen) -->
@@ -1447,10 +1504,253 @@ function renderAlertAbsen() {
     +'</div>';
 }
 
+// =====================================================
+// FITUR 4: RATA-RATA KETERLAMBATAN PER DOSEN
+// =====================================================
+function renderRataLambat(data) {
+  if(!isAdmin){ var c=document.getElementById('card-terlambat');if(c)c.style.display='none';return; }
+  var AVATAR_PAL4=['#185fa5','#639922','#7c3aed','#c2410c','#0f766e','#b45309','#be123c','#1d4ed8'];
+  function aC4(n){var c=0;for(var i=0;i<n.length;i++)c+=n.charCodeAt(i);return AVATAR_PAL4[c%AVATAR_PAL4.length];}
+  function aI4(n){var p=n.trim().split(' ').filter(Boolean);return p.length===1?p[0].substring(0,2).toUpperCase():(p[0][0]+p[p.length-1][0]).toUpperCase();}
+
+  // Hitung rata-rata keterlambatan per dosen (hanya yang pernah terlambat)
+  var result = D.map(function(d){
+    var dd = data.filter(function(p){ return p.dosenId===d.id; });
+    var terlambat = dd.filter(function(p){ return p.color==='yellow'||p.color==='red'; });
+    if(terlambat.length===0) return null;
+    var totalMenit = terlambat.reduce(function(s,p){ return s+(Number(p.diff)||0); },0);
+    var rataRata = Math.round(totalMenit / terlambat.length);
+    var pctTerlambat = Math.round((terlambat.length/dd.length)*100);
+    return { dosen:d, total:dd.length, terlambatCount:terlambat.length, rataRata:rataRata, pctTerlambat:pctTerlambat };
+  }).filter(Boolean).sort(function(a,b){ return b.rataRata-a.rataRata; });
+
+  var el = document.getElementById('list-terlambat');
+  if(result.length===0){ el.innerHTML='<div style="padding:10px;background:#eaf3de;border-radius:8px;font-size:12px;color:#27500a;text-align:center">✅ Tidak ada dosen yang terlambat pada periode ini.</div>'; return; }
+
+  // Cari max untuk skala bar
+  var maxMnt = result[0].rataRata || 1;
+
+  el.innerHTML = result.map(function(r,i){
+    var ac=aC4(r.dosen.nama), ini=aI4(r.dosen.nama);
+    var barColor = r.rataRata<=10?'#BA7517':r.rataRata<=20?'#e07b20':'#E24B4A';
+    var barW = Math.round((r.rataRata/maxMnt)*100);
+    return '<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #f0f0ee">'
+      +'<span style="font-size:12px;font-weight:700;color:#888;width:20px;text-align:center">#'+(i+1)+'</span>'
+      +'<div style="width:30px;height:30px;border-radius:50%;background:'+ac+';color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0">'+ini+'</div>'
+      +'<div style="flex:1;min-width:0">'
+        +'<div style="font-size:12px;font-weight:600;color:#1a1a1a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+r.dosen.nama+'</div>'
+        +'<div style="display:flex;align-items:center;gap:6px;margin-top:4px">'
+          +'<div style="flex:1;background:#f0f0ee;border-radius:20px;height:7px;overflow:hidden"><div class="lat-bar" style="width:'+barW+'%;background:'+barColor+'"></div></div>'
+          +'<span style="font-size:11px;font-weight:700;color:'+barColor+';white-space:nowrap">rata '+r.rataRata+' mnt</span>'
+        +'</div>'
+        +'<div style="font-size:10px;color:#888;margin-top:2px">Terlambat '+r.terlambatCount+'x dari '+r.total+'x sesi ('+r.pctTerlambat+'%)</div>'
+      +'</div>'
+      +'</div>';
+  }).join('');
+}
+
+// =====================================================
+// FITUR 5: GRAFIK TREN KEHADIRAN BULANAN
+// =====================================================
+function renderTren() {
+  if(!isAdmin){ var c=document.getElementById('card-tren');if(c)c.style.display='none';return; }
+  var dosenFilter = (document.getElementById('tren-dosen')||{value:'all'}).value;
+  var BULAN = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agt','Sep','Okt','Nov','Des'];
+  var tahunIni = new Date().getFullYear();
+
+  // Isi dropdown filter dosen tren jika belum
+  var sel = document.getElementById('tren-dosen');
+  if(sel && sel.options.length<=1){
+    D.forEach(function(d){ var o=document.createElement('option');o.value=d.id;o.textContent=d.nama;sel.appendChild(o); });
+  }
+
+  // Kelompokkan presensi per bulan
+  var dataSource = dosenFilter==='all' ? P : P.filter(function(p){ return p.dosenId===dosenFilter; });
+
+  var perBulan = BULAN.map(function(_, idx){
+    var bulanData = dataSource.filter(function(p){ return Number(p.bulan)===(idx+1); });
+    if(bulanData.length===0) return { label:BULAN[idx], total:0, tepat:0, pct:null };
+    var tepat = bulanData.filter(function(p){ return p.color==='green'; }).length;
+    return { label:BULAN[idx], total:bulanData.length, tepat:tepat, pct:Math.round((tepat/bulanData.length)*100) };
+  });
+
+  var maxTotal = Math.max.apply(null, perBulan.map(function(b){ return b.total||0; })) || 1;
+
+  var html = '<div class="tren-bar-wrap">';
+  html += perBulan.map(function(b){
+    if(b.pct===null){
+      return '<div class="tren-bar-col"><div class="tren-pct" style="color:#ddd">—</div><div class="tren-bar" style="height:4px;background:#f0f0ee;width:100%"></div><div class="tren-lbl">'+b.label+'</div></div>';
+    }
+    var h = Math.max(8, Math.round((b.total/maxTotal)*60));
+    var col = b.pct>=80?'#639922':b.pct>=60?'#BA7517':'#E24B4A';
+    return '<div class="tren-bar-col">'
+      +'<div class="tren-pct" style="color:'+col+'">'+b.pct+'%</div>'
+      +'<div class="tren-bar" style="height:'+h+'px;background:'+col+'" title="'+b.label+': '+b.tepat+'x tepat / '+b.total+'x total"></div>'
+      +'<div class="tren-lbl">'+b.label+'</div>'
+      +'</div>';
+  }).join('');
+  html += '</div>';
+
+  // Tambahkan catatan naik/turun
+  var lastTwo = perBulan.filter(function(b){ return b.pct!==null; }).slice(-2);
+  if(lastTwo.length===2){
+    var diff = lastTwo[1].pct - lastTwo[0].pct;
+    var trendNote = diff>0
+      ? '<div style="margin-top:8px;padding:6px 10px;background:#eaf3de;border-radius:7px;font-size:11px;color:#27500a;font-weight:500">📈 Naik '+diff+'% dibanding bulan sebelumnya</div>'
+      : diff<0
+      ? '<div style="margin-top:8px;padding:6px 10px;background:#fcebeb;border-radius:7px;font-size:11px;color:#a32d2d;font-weight:500">📉 Turun '+Math.abs(diff)+'% dibanding bulan sebelumnya</div>'
+      : '<div style="margin-top:8px;padding:6px 10px;background:#f5f5f3;border-radius:7px;font-size:11px;color:#888;font-weight:500">➡️ Sama dengan bulan sebelumnya</div>';
+    html += trendNote;
+  }
+
+  document.getElementById('tren-chart').innerHTML = html;
+}
+
+// =====================================================
+// FITUR 6: ALERT GANTI JADWAL MENUMPUK
+// =====================================================
+function renderGantiAlert() {
+  if(!isAdmin){ var c=document.getElementById('card-ganti-alert');if(c)c.style.display='none';return; }
+  var AVATAR_PAL5=['#185fa5','#639922','#7c3aed','#c2410c','#0f766e','#b45309','#be123c','#1d4ed8'];
+  function aC5(n){var c=0;for(var i=0;i<n.length;i++)c+=n.charCodeAt(i);return AVATAR_PAL5[c%AVATAR_PAL5.length];}
+  function aI5(n){var p=n.trim().split(' ').filter(Boolean);return p.length===1?p[0].substring(0,2).toUpperCase():(p[0][0]+p[p.length-1][0]).toUpperCase();}
+
+  var now = new Date();
+  var bulanIni = now.getMonth()+1;
+  var tahunIni = now.getFullYear();
+
+  var alerts = D.map(function(d){
+    // Hitung pengajuan ganti dalam bulan ini
+    var gantibulan = G.filter(function(g){
+      if(g.dosenId!==d.id) return false;
+      // Coba parse tanggal diajukan atau tanggal ganti
+      var tgl = g.diajukan || g.ganti || '';
+      var parts = tgl.split(/[\/\-]/);
+      if(parts.length<3) return false;
+      // Format bisa dd/mm/yyyy atau yyyy-mm-dd
+      var bulan, tahun;
+      if(parts[0].length===4){ tahun=+parts[0];bulan=+parts[1]; }
+      else { bulan=+parts[1];tahun=+parts[2]; }
+      return bulan===bulanIni && tahun===tahunIni;
+    });
+    if(gantibulan.length<3) return null;
+    return { dosen:d, count:gantibulan.length, list:gantibulan };
+  }).filter(Boolean).sort(function(a,b){ return b.count-a.count; });
+
+  var card = document.getElementById('card-ganti-alert');
+  var listEl = document.getElementById('list-ganti-alert');
+  if(alerts.length===0){ card.style.display='none'; return; }
+  card.style.display='block';
+
+  listEl.innerHTML = '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">'
+    + alerts.map(function(a){
+        var ac=aC5(a.dosen.nama), ini=aI5(a.dosen.nama);
+        var mkList = [...new Set(a.list.map(function(g){return g.mk;}))].join(', ');
+        return '<div style="background:#fff4e5;border:1px solid #fac775;border-radius:10px;padding:10px 12px">'
+          +'<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">'
+            +'<div style="width:32px;height:32px;border-radius:50%;background:'+ac+';color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0">'+ini+'</div>'
+            +'<div><div style="font-size:12px;font-weight:700;color:#854f0b">'+a.dosen.nama+'</div>'
+            +'<div style="font-size:10px;color:#888">Bulan ini: <b>'+a.count+'x</b> pengajuan ganti</div></div>'
+          +'</div>'
+          +'<div style="font-size:10px;color:#888;background:#fff;border-radius:6px;padding:4px 8px;border:1px solid #fac775">📚 MK: '+mkList+'</div>'
+          +'</div>';
+    }).join('')
+    +'</div>';
+}
+
+// =====================================================
+// FITUR 7: RIWAYAT GANTI JADWAL PER DOSEN (AUDIT)
+// =====================================================
+function renderRiwayatGanti() {
+  if(!isAdmin){ var c=document.getElementById('card-riwayat-ganti');if(c)c.style.display='none';return; }
+
+  // Isi dropdown jika belum
+  var sel = document.getElementById('filter-ganti-dosen');
+  if(sel && sel.options.length<=1){
+    D.forEach(function(d){ var o=document.createElement('option');o.value=d.id;o.textContent=d.nama;sel.appendChild(o); });
+  }
+
+  var df = sel ? sel.value : 'all';
+  var gantiData = df==='all' ? G.slice() : G.filter(function(g){ return g.dosenId===df; });
+  gantiData = gantiData.slice().reverse(); // terbaru dulu
+
+  var el = document.getElementById('list-riwayat-ganti');
+  if(gantiData.length===0){ el.innerHTML='<p class="empty">Belum ada pengajuan ganti jadwal.</p>'; return; }
+
+  el.innerHTML = gantiData.map(function(g){
+    var statusBg = g.statusAcc==='Disetujui'?'#eaf3de':g.statusAcc==='Ditolak'?'#fcebeb':'#faeeda';
+    var statusTx = g.statusAcc==='Disetujui'?'#27500a':g.statusAcc==='Ditolak'?'#791f1f':'#633806';
+    var statusIcon = g.statusAcc==='Disetujui'?'✅':g.statusAcc==='Ditolak'?'❌':'⏳';
+    var AVATAR_PAL6=['#185fa5','#639922','#7c3aed','#c2410c','#0f766e','#b45309'];
+    function aC6(n){var c=0;for(var i=0;i<n.length;i++)c+=n.charCodeAt(i);return AVATAR_PAL6[c%AVATAR_PAL6.length];}
+    function aI6(n){var p=n.trim().split(' ').filter(Boolean);return p.length===1?p[0].substring(0,2).toUpperCase():(p[0][0]+p[p.length-1][0]).toUpperCase();}
+    var ac=aC6(g.dosen), ini=aI6(g.dosen);
+
+    return '<div class="ganti-card">'
+      // header
+      +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">'
+        +'<div style="display:flex;align-items:center;gap:8px">'
+          +'<div style="width:30px;height:30px;border-radius:50%;background:'+ac+';color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0">'+ini+'</div>'
+          +'<div>'
+            +'<div style="font-size:13px;font-weight:600;color:#1a1a1a">'+g.dosen+'</div>'
+            +'<div style="font-size:10px;color:#888">'+g.mk+' · Diajukan: '+g.diajukan+'</div>'
+          +'</div>'
+        +'</div>'
+        +'<span class="ganti-status" style="background:'+statusBg+';color:'+statusTx+'">'+statusIcon+' '+g.statusAcc+'</span>'
+      +'</div>'
+      // tanggal & jam
+      +'<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:6px">'
+        +'<div style="background:#f8f8f7;border-radius:6px;padding:5px 8px">'
+          +'<div style="font-size:9px;color:#aaa;text-transform:uppercase">Tgl Asli</div>'
+          +'<div style="font-size:11px;font-weight:600;color:#1a1a1a">'+g.asli+'</div>'
+        +'</div>'
+        +'<div style="background:#f8f8f7;border-radius:6px;padding:5px 8px">'
+          +'<div style="font-size:9px;color:#aaa;text-transform:uppercase">Tgl Ganti</div>'
+          +'<div style="font-size:11px;font-weight:600;color:#1a1a1a">'+g.ganti+'</div>'
+        +'</div>'
+        +'<div style="background:#f8f8f7;border-radius:6px;padding:5px 8px">'
+          +'<div style="font-size:9px;color:#aaa;text-transform:uppercase">Jam · Mode</div>'
+          +'<div style="font-size:11px;font-weight:600;color:#1a1a1a">'+g.jam+' · '+g.mode+'</div>'
+        +'</div>'
+      +'</div>'
+      // keterangan & alasan tolak
+      +(g.ket?'<div style="font-size:11px;color:#555;margin-bottom:4px">📝 '+g.ket+'</div>':'')
+      +(g.alasanTolak?'<div style="font-size:11px;color:#a32d2d;padding:4px 8px;background:#fcebeb;border-radius:6px">❌ Alasan ditolak: '+g.alasanTolak+'</div>':'')
+      +(g.bukti?'<div style="margin-top:4px"><a href="'+g.bukti+'" target="_blank" style="font-size:11px;color:#185fa5;text-decoration:none">🔗 Lihat bukti</a></div>':'')
+      // tombol aksi admin (jika masih menunggu)
+      +(isAdmin && g.statusAcc==='Menunggu'
+        ? '<div style="display:flex;gap:6px;margin-top:8px">'
+            +'<button class="btn btn-sm" style="background:#eaf3de;color:#27500a;border-color:#97c459;font-size:11px" onclick="aksiBuktGanti(\''+g.id+'\',\'Disetujui\',\'\')">✅ Setujui</button>'
+            +'<button class="btn btn-sm btn-danger" style="font-size:11px" onclick="promptTolakGanti(\''+g.id+'\')">❌ Tolak</button>'
+          +'</div>'
+        : '')
+      +'</div>';
+  }).join('');
+}
+
+async function aksiBuktGanti(id, status, alasan) {
+  setSB('sy');
+  try {
+    await post({action:'updateStatusGanti', id:id, status:status, alasan:alasan});
+    var idx = G.findIndex(function(g){ return g.id===id; });
+    if(idx>-1){ G[idx].statusAcc=status; G[idx].alasanTolak=alasan; }
+    setSB('ok'); renderRiwayatGanti(); renderGantiAlert();
+  } catch(e){ setSB('er'); alert('Gagal: '+e.message); }
+}
+function promptTolakGanti(id) {
+  var alasan = prompt('Masukkan alasan penolakan:');
+  if(alasan===null) return;
+  aksiBuktGanti(id, 'Ditolak', alasan||'Tidak memenuhi ketentuan');
+}
+
 function renderR(){
   // Fitur 1 & 2: selalu render berdasarkan data real-time (bukan filter tanggal)
   renderDailyDashboard();
   renderAlertAbsen();
+  // Fitur 4, 5, 6, 7: render dengan data filtered
+  renderGantiAlert();
+  renderRiwayatGanti();
+  renderTren();
 
   var start=document.getElementById('r-start').value;
   var end=document.getElementById('r-end').value;
@@ -1620,6 +1920,9 @@ function renderR(){
 
   document.getElementById('tp-count').textContent = totalPelanggaran;
   document.getElementById('pelanggaran-banner').style.display = totalPelanggaran > 0 ? 'block' : 'none';
+
+  // Fitur 4: rata-rata keterlambatan (pakai data filtered)
+  renderRataLambat(data);
 
   // DETAIL RIWAYAT — card per sesi, dikelompokkan per tanggal
   var groupedData = {};
@@ -1946,6 +2249,9 @@ function fillAll(){
   // Fitur monitoring: render setelah data siap
   renderDailyDashboard();
   renderAlertAbsen();
+  renderGantiAlert();
+  renderRiwayatGanti();
+  renderTren();
 }
 
 function pg(p,btn){
