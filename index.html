@@ -91,6 +91,8 @@ tr:last-child td{border-bottom:none}
 .app-footer {text-align: center;font-size: 12px;color: #aaa;margin-top: 2rem;padding-top: 1rem;border-top: 1px solid #e5e5e3;line-height: 1.6;}
 .app-footer b { color: #888; }
 .version-tag { font-size: 10px; color: #bbb; margin-top: 4px; display: inline-block; font-weight: 500; letter-spacing: 0.05em; }
+/* Prevent grid blowout from long URLs/text */
+[style*="grid-template-columns"] > * { min-width: 0; }
 
 /* ===== TOP 10 LEADERBOARD ===== */
 .lb-tabs{display:flex;gap:4px;margin-bottom:12px;background:#f5f5f3;border-radius:10px;padding:3px}
@@ -253,11 +255,12 @@ tr:last-child td{border-bottom:none}
     </div>
     <div class="field">
       <label>Mode Perkuliahan</label>
-      <select id="pmode">
+      <select id="pmode" onchange="onModeChange()">
         <option value="Luring">Luring (Tatap Muka di Kelas)</option>
         <option value="Daring Sinkronus">Daring Sinkronus (Zoom / GMeet)</option>
         <option value="Daring Asinkronus">Daring Asinkronus (E-learning / Penugasan)</option>
       </select>
+      <div id="mode-hint" style="display:none;margin-top:6px;padding:8px 12px;border-radius:8px;font-size:12px;font-weight:500"></div>
     </div>
     <div id="prev" style="display:none;margin-bottom:1rem;padding:10px 14px;border-radius:8px;font-size:14px;font-weight:500"></div>
     <button class="btn btn-primary" id="brek" onclick="rekam()">Rekam mulai mengajar</button>
@@ -602,6 +605,42 @@ tr:last-child td{border-bottom:none}
     <div class="field"><label>Ruang</label><input type="text" id="jmr" placeholder="Ruang 301"/></div>
     <div class="field"><label>Semester</label><input type="text" id="jmsem" placeholder="Genap 2025/2026"/></div>
     <div class="mf"><button class="btn" onclick="cm('mjad')">Batal</button><button class="btn btn-primary" id="bsj" onclick="saveJad()">Simpan</button></div>
+  </div>
+</div>
+
+<!-- Modal Konfirmasi Rekam Presensi -->
+<div class="mo" id="modal-konfirmasi-rekam">
+  <div class="md" style="max-width:420px">
+    <div style="text-align:center;margin-bottom:1rem">
+      <div style="font-size:32px;margin-bottom:6px">📋</div>
+      <div class="mt" style="margin-bottom:4px">Konfirmasi Rekam Presensi</div>
+      <div style="font-size:12px;color:#888">Periksa kembali data sebelum menyimpan</div>
+    </div>
+
+    <!-- Ringkasan data -->
+    <div style="background:#f8f8f7;border-radius:10px;padding:12px 14px;margin-bottom:14px">
+      <div style="display:grid;grid-template-columns:auto 1fr;gap:4px 12px;font-size:13px">
+        <span style="color:#888;white-space:nowrap">Mata Kuliah</span><b id="rkf-mk" style="color:#1a1a1a"></b>
+        <span style="color:#888;white-space:nowrap">Jam Mulai</span><b id="rkf-jam" style="color:#1a1a1a"></b>
+        <span style="color:#888;white-space:nowrap">Ruang / Link</span><b id="rkf-ruang" style="color:#1a1a1a;word-break:break-all"></b>
+      </div>
+    </div>
+
+    <!-- Mode highlight — bagian utama yang perlu dicek -->
+    <div id="rkf-mode-box" style="border-radius:10px;padding:12px 14px;margin-bottom:14px;border:2px solid">
+      <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px;opacity:.7">Mode Perkuliahan yang dipilih</div>
+      <div id="rkf-mode-label" style="font-size:16px;font-weight:700"></div>
+      <div id="rkf-mode-warn" style="font-size:12px;margin-top:6px;font-weight:500"></div>
+    </div>
+
+    <div style="background:#faeeda;border-left:3px solid #fac775;border-radius:0 8px 8px 0;padding:9px 12px;font-size:12px;color:#633806;margin-bottom:16px;font-weight:500">
+      ⚠️ Pastikan mode sudah sesuai kondisi kelas hari ini sebelum menyimpan.
+    </div>
+
+    <div class="mf" style="gap:8px">
+      <button class="btn" onclick="cm('modal-konfirmasi-rekam')" style="flex:1">← Kembali &amp; Koreksi</button>
+      <button class="btn btn-primary" id="btn-konfirmasi-simpan" onclick="eksekusiRekam()" style="flex:1">✅ Ya, Simpan</button>
+    </div>
   </div>
 </div>
 
@@ -1009,6 +1048,31 @@ function jStr(v){
   return String(v);
 }
 
+function onModeChange(){
+  var sel = document.getElementById('pmode');
+  var hint = document.getElementById('mode-hint');
+  if(!sel||!hint) return;
+  var v = sel.value;
+  if(v==='Luring'){
+    hint.style.display='block';
+    hint.style.background='#eaf3de';hint.style.color='#27500a';
+    hint.innerHTML='🏫 <b>Luring</b> — pastikan perkuliahan memang dilakukan tatap muka di kelas/ruang fisik.';
+  } else if(v==='Daring Sinkronus'){
+    hint.style.display='block';
+    hint.style.background='#e6f1fb';hint.style.color='#185fa5';
+    hint.innerHTML='💻 <b>Daring Sinkronus</b> — pastikan perkuliahan dilakukan secara online real-time (Zoom / GMeet / Teams).';
+  } else if(v==='Daring Asinkronus'){
+    hint.style.display='block';
+    hint.style.background='#faeeda';hint.style.color='#633806';
+    hint.innerHTML='📝 <b>Daring Asinkronus</b> — pastikan perkuliahan berupa penugasan mandiri / e-learning, bukan tatap muka.';
+  } else {
+    hint.style.display='none';
+  }
+}
+
+// Data sementara sebelum konfirmasi
+var _rekamPending = null;
+
 async function rekam(){
   if(!currentUser){alert('Hanya dosen yang bisa melakukan ini.');return;}
   var jid=document.getElementById('pj').value,
@@ -1032,41 +1096,80 @@ async function rekam(){
   var todayStr=new Date().toLocaleDateString('id-ID');
   var sudah=P.find(function(p){return p.dosenId===currentUser.id&&p.jadwalId===jid&&p.tanggal===todayStr;});
   if(sudah){alert('⚠️ Kamu sudah presensi untuk jadwal ini hari ini.\nWaktu hadir: '+sudah.waktuHadir);return;}
-  
-  var now=new Date(),st=stH(jam);
+
+  // Simpan data pending dan tampilkan modal konfirmasi
+  _rekamPending = { jid:jid, jam:jam, ruang:ruang, pmode:pmode, jad:jad, isGantiValid:isGantiValid, isMajuValid:isMajuValid };
+
+  // Isi modal
+  document.getElementById('rkf-mk').textContent = jad.mk + (jad.kelas?' ['+jad.kelas+']':'');
+  document.getElementById('rkf-jam').textContent = jam;
+  document.getElementById('rkf-ruang').textContent = ruang;
+
+  var modeBox = document.getElementById('rkf-mode-box');
+  var modeLbl = document.getElementById('rkf-mode-label');
+  var modeWarn = document.getElementById('rkf-mode-warn');
+
+  if(pmode==='Luring'){
+    modeBox.style.background='#eaf3de'; modeBox.style.borderColor='#97c459';
+    modeLbl.style.color='#27500a'; modeLbl.textContent='🏫 Luring (Tatap Muka di Kelas)';
+    modeWarn.style.color='#27500a';
+    modeWarn.textContent='Pastikan Anda memang sedang mengajar tatap muka di ruang fisik.';
+  } else if(pmode==='Daring Sinkronus'){
+    modeBox.style.background='#e6f1fb'; modeBox.style.borderColor='#85b7eb';
+    modeLbl.style.color='#185fa5'; modeLbl.textContent='💻 Daring Sinkronus (Zoom / GMeet)';
+    modeWarn.style.color='#185fa5';
+    modeWarn.textContent='Pastikan perkuliahan dilakukan online real-time, bukan tatap muka.';
+  } else {
+    modeBox.style.background='#faeeda'; modeBox.style.borderColor='#fac775';
+    modeLbl.style.color='#633806'; modeLbl.textContent='📝 Daring Asinkronus (E-learning / Penugasan)';
+    modeWarn.style.color='#633806';
+    modeWarn.textContent='Pastikan ini memang penugasan mandiri / e-learning tanpa tatap muka.';
+  }
+
+  document.getElementById('modal-konfirmasi-rekam').classList.add('open');
+}
+
+async function eksekusiRekam(){
+  if(!_rekamPending) return;
+  var p = _rekamPending; _rekamPending = null;
+  cm('modal-konfirmasi-rekam');
+
+  var now=new Date(), st=stH(p.jam);
   var ts=now.toLocaleDateString('id-ID',{day:'2-digit',month:'2-digit',year:'numeric'})+' '+now.toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  var todayStr=now.toLocaleDateString('id-ID');
   
   // Tentukan jam selesai berdasarkan sumber (ganti/maju/asli)
   var jamSelesaiAkhir = '';
-  if(isGantiValid && isGantiValid.jam.indexOf('-') > -1) jamSelesaiAkhir = isGantiValid.jam.split('-')[1].trim();
-  else if(isMajuValid && isMajuValid.jam.indexOf('-') > -1) jamSelesaiAkhir = isMajuValid.jam.split('-')[1].trim();
-  else jamSelesaiAkhir = jad.jamSelesai||'';
+  if(p.isGantiValid && p.isGantiValid.jam.indexOf('-') > -1) jamSelesaiAkhir = p.isGantiValid.jam.split('-')[1].trim();
+  else if(p.isMajuValid && p.isMajuValid.jam.indexOf('-') > -1) jamSelesaiAkhir = p.isMajuValid.jam.split('-')[1].trim();
+  else jamSelesaiAkhir = p.jad.jamSelesai||'';
 
   // Tandai sumber jadwal di record
-  var sumberJadwal = isGantiValid ? 'Jadwal Pengganti' : (isMajuValid ? 'Jadwal Maju' : 'Jadwal Reguler');
+  var sumberJadwal = p.isGantiValid ? 'Jadwal Pengganti' : (p.isMajuValid ? 'Jadwal Maju' : 'Jadwal Reguler');
 
-  var rec={id:Date.now().toString(),dosenId:currentUser.id,dosen:currentUser.nama,mk:jad.mk,kelas:jad.kelas||'',
-    jadwalId:jid,jam:jam,ruang:ruang,waktuHadir:now.toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'}),
+  var rec={id:Date.now().toString(),dosenId:currentUser.id,dosen:currentUser.nama,mk:p.jad.mk,kelas:p.jad.kelas||'',
+    jadwalId:p.jid,jam:p.jam,ruang:p.ruang,waktuHadir:now.toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'}),
     tanggal:todayStr,bulan:now.getMonth()+1,status:st.l,color:st.c,diff:st.d,
     jamSelesaiJadwal:jamSelesaiAkhir,waktuSelesai:'',statusSelesai:'',colorSelesai:'',timestamp:ts,
-    modeKuliah: pmode, sumberJadwal: sumberJadwal};
+    modeKuliah:p.pmode, sumberJadwal:sumberJadwal};
 
   var btn=document.getElementById('brek');btn.disabled=true;btn.textContent='Menyimpan...';
   setSB('sy');
   try{
     await post({action:'savePresensi',data:rec});
-    P.push(rec);setSB('ok');actId=rec.id;actJad=jad;
+    P.push(rec);setSB('ok');actId=rec.id;actJad=p.jad;
     document.getElementById('resume-banner').style.display='none';
-    tampilKartuSelesai(rec,jad);
+    tampilKartuSelesai(rec,p.jad);
     renderHari();
     renderRiwayatSaya();
     document.getElementById('pj').innerHTML='<option value="">— Pilih jadwal —</option>';
     fillJadwalDosen();
     document.getElementById('pjam').value='';document.getElementById('pruang').value='';
     document.getElementById('pmode').value='Luring';
+    document.getElementById('mode-hint').style.display='none';
     document.getElementById('hint').style.display='none';document.getElementById('warn-hari').style.display='none';
     document.getElementById('prev').style.display='none';
-    alert('✅ Presensi berhasil!\n'+jad.mk+'\nStatus: '+st.l+(st.d>0?' (+'+st.d+' mnt)':''));
+    alert('✅ Presensi berhasil!\n'+p.jad.mk+'\nMode: '+p.pmode+'\nStatus: '+st.l+(st.d>0?' (+'+st.d+' mnt)':''));
   }catch(e){setSB('er');alert('Gagal: '+e.message);}
   btn.disabled=false;btn.textContent='Rekam mulai mengajar';
 }
@@ -2043,7 +2146,7 @@ function renderR(){
         +'</div>';
 
       // Grid card sesi
-      detHtml += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">';
+      detHtml += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;min-width:0;overflow:hidden">';
       detHtml += groupedData[tgl].map(function(p) {
         var jt = jStr(p.jam)||p.jam;
         var md = p.modeKuliah||'Luring';
@@ -2082,22 +2185,22 @@ function renderR(){
         // avatar
         var ac2=aColor(p.dosen), ini2=aInit(p.dosen);
 
-        return '<div style="background:#fff;border:1px solid #e5e5e3;border-radius:12px;padding:10px 12px;box-shadow:0 1px 3px rgba(0,0,0,.04)">'
+        return '<div style="background:#fff;border:1px solid #e5e5e3;border-radius:12px;padding:10px 12px;box-shadow:0 1px 3px rgba(0,0,0,.04);min-width:0;overflow:hidden">'
           // nama dosen row
           +'<div style="display:flex;align-items:center;gap:7px;margin-bottom:8px">'
             +'<div style="width:28px;height:28px;border-radius:50%;background:'+ac2+';color:#fff;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0">'+ini2+'</div>'
-            +'<div style="min-width:0">'
+            +'<div style="min-width:0;overflow:hidden">'
               +'<div style="font-size:12px;font-weight:600;color:#1a1a1a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+p.dosen+'</div>'
-              +'<div style="font-size:10px;color:#888">'+p.mk+(p.kelas?' · '+p.kelas:'')+'</div>'
+              +'<div style="font-size:10px;color:#888;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+p.mk+(p.kelas?' · '+p.kelas:'')+'</div>'
             +'</div>'
           +'</div>'
           // info row
-          +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-bottom:6px">'
-            +'<div style="background:#f8f8f7;border-radius:6px;padding:4px 6px">'
+          +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-bottom:6px;min-width:0">'
+            +'<div style="background:#f8f8f7;border-radius:6px;padding:4px 6px;min-width:0;overflow:hidden">'
               +'<div style="font-size:9px;color:#aaa;text-transform:uppercase;letter-spacing:.04em">Ruang</div>'
-              +'<div style="font-size:11px;font-weight:600;color:#1a1a1a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+p.ruang+'</div>'
+              +'<div style="font-size:11px;font-weight:600;color:#1a1a1a;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%" title="'+p.ruang+'">'+p.ruang+'</div>'
             +'</div>'
-            +'<div style="background:#f8f8f7;border-radius:6px;padding:4px 6px">'
+            +'<div style="background:#f8f8f7;border-radius:6px;padding:4px 6px;min-width:0">'
               +'<div style="font-size:9px;color:#aaa;text-transform:uppercase;letter-spacing:.04em">Jadwal</div>'
               +'<div style="font-size:11px;font-weight:600;color:#1a1a1a">'+jt+'</div>'
             +'</div>'
