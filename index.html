@@ -225,6 +225,7 @@ tr:last-child td{border-bottom:none}
   <button class="tab" id="tab-ganti" onclick="pg('ganti',this)">Jadwal Pengganti</button>
   <button class="tab" id="tab-maju" onclick="pg('maju',this)">Jadwal Maju</button>
   <button class="tab" id="tab-riwayat" onclick="pg('riwayat',this)">Riwayat Saya</button>
+  <button class="tab" id="tab-rapor" onclick="pg('rapor',this)">📊 Rapor Saya</button>
   <button class="tab" id="tab-report" onclick="pg('report',this)" style="display:none">Laporan Dashboard</button>
   <button class="tab" id="tab-dosen" onclick="pg('dosen',this)" style="display:none">Kelola Dosen</button>
   <button class="tab" id="tab-jadwal" onclick="pg('jadwal',this)" style="display:none">Kelola Jadwal</button>
@@ -370,6 +371,100 @@ tr:last-child td{border-bottom:none}
       <p class="empty">Memuat data...</p>
     </div>
   </div>
+</div>
+
+<!-- ===== HALAMAN RAPOR SAYA ===== -->
+<div id="page-rapor" class="page">
+
+  <!-- Header rapor -->
+  <div class="card" style="background:linear-gradient(135deg,#1a1a1a 0%,#2d2d2d 100%);border:none;color:#fff;margin-bottom:1rem">
+    <div style="display:flex;align-items:center;gap:14px;margin-bottom:14px">
+      <div id="rapor-avatar" style="width:52px;height:52px;border-radius:50%;background:#fff;color:#1a1a1a;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:800;flex-shrink:0"></div>
+      <div>
+        <div id="rapor-nama" style="font-size:16px;font-weight:700;line-height:1.3"></div>
+        <div style="font-size:12px;color:#aaa;margin-top:2px">Evaluasi Mandiri Presensi Perkuliahan</div>
+        <div id="rapor-periode" style="font-size:11px;color:#888;margin-top:2px"></div>
+      </div>
+    </div>
+    <!-- Grade besar -->
+    <div style="display:flex;align-items:center;gap:16px">
+      <div style="text-align:center">
+        <div id="rapor-grade-huruf" style="font-size:48px;font-weight:900;line-height:1"></div>
+        <div style="font-size:10px;color:#aaa;margin-top:2px;text-transform:uppercase;letter-spacing:.08em">Grade</div>
+      </div>
+      <div style="flex:1">
+        <div id="rapor-grade-label" style="font-size:14px;font-weight:600;margin-bottom:6px"></div>
+        <div style="background:rgba(255,255,255,.15);border-radius:20px;height:10px;overflow:hidden">
+          <div id="rapor-grade-bar" style="height:10px;border-radius:20px;transition:width .6s ease"></div>
+        </div>
+        <div id="rapor-grade-pct" style="font-size:12px;color:#aaa;margin-top:4px"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Statistik 4 kotak -->
+  <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:1rem">
+    <div class="card" style="padding:12px;text-align:center;margin-bottom:0">
+      <div id="rapor-total" style="font-size:22px;font-weight:700;color:#1a1a1a"></div>
+      <div style="font-size:10px;color:#888;margin-top:2px">Total Sesi</div>
+    </div>
+    <div class="card" style="padding:12px;text-align:center;margin-bottom:0;background:#eaf3de">
+      <div id="rapor-tepat" style="font-size:22px;font-weight:700;color:#27500a"></div>
+      <div style="font-size:10px;color:#27500a;margin-top:2px">Tepat Waktu</div>
+    </div>
+    <div class="card" style="padding:12px;text-align:center;margin-bottom:0;background:#faeeda">
+      <div id="rapor-terlambat" style="font-size:22px;font-weight:700;color:#633806"></div>
+      <div style="font-size:10px;color:#633806;margin-top:2px">Terlambat</div>
+    </div>
+    <div class="card" style="padding:12px;text-align:center;margin-bottom:0;background:#fcebeb">
+      <div id="rapor-sangat" style="font-size:22px;font-weight:700;color:#a32d2d"></div>
+      <div style="font-size:10px;color:#a32d2d;margin-top:2px">Sangat Terlambat</div>
+    </div>
+  </div>
+
+  <!-- Pesan evaluasi -->
+  <div id="rapor-pesan" class="card" style="margin-bottom:1rem"></div>
+
+  <!-- Rekap mode & kehadiran -->
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:1rem">
+    <div class="card" style="margin-bottom:0;padding:14px">
+      <div class="sec" style="margin-bottom:10px">Mode Perkuliahan</div>
+      <div id="rapor-mode"></div>
+    </div>
+    <div class="card" style="margin-bottom:0;padding:14px">
+      <div class="sec" style="margin-bottom:10px">Rekap Selesai</div>
+      <div id="rapor-selesai"></div>
+    </div>
+  </div>
+
+  <!-- Tren bulanan mini -->
+  <div class="card" style="margin-bottom:1rem">
+    <div class="sec" style="margin-bottom:12px">📈 Tren Ketepatan Hadir Bulanan</div>
+    <div id="rapor-tren" style="display:flex;align-items:flex-end;gap:4px;height:80px"></div>
+    <div style="display:flex;gap:12px;margin-top:8px;flex-wrap:wrap">
+      <span style="font-size:10px;color:#888;display:flex;align-items:center;gap:4px"><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#639922"></span>≥80%</span>
+      <span style="font-size:10px;color:#888;display:flex;align-items:center;gap:4px"><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#BA7517"></span>60–79%</span>
+      <span style="font-size:10px;color:#888;display:flex;align-items:center;gap:4px"><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#E24B4A"></span>&lt;60%</span>
+    </div>
+  </div>
+
+  <!-- Rekap per mata kuliah -->
+  <div class="card" style="margin-bottom:1rem">
+    <div class="sec" style="margin-bottom:12px">📚 Rekap per Mata Kuliah</div>
+    <div id="rapor-mk"></div>
+  </div>
+
+  <!-- Riwayat pengajuan (ganti + maju) -->
+  <div class="card" style="margin-bottom:1rem">
+    <div class="sec" style="margin-bottom:10px">📋 Riwayat Pengajuan Jadwal</div>
+    <div id="rapor-pengajuan"></div>
+  </div>
+
+  <!-- Catatan kaki -->
+  <div style="background:#f5f5f3;border-radius:10px;padding:12px 14px;font-size:11px;color:#888;line-height:1.7;margin-bottom:1rem">
+    ℹ️ Data rapor ini diambil langsung dari server akademik dan mencerminkan rekam jejak presensi Anda yang tersimpan. Rapor ini bersifat <b>informatif</b> sebagai bahan evaluasi mandiri sebelum menjadi penilaian resmi oleh WK I dan HRD. Jika ada ketidaksesuaian, segera hubungi Bidang Akademik.
+  </div>
+
 </div>
 
 <div id="page-dosen" class="page">
@@ -821,6 +916,7 @@ function updateUserUI(){
   var btnG = document.getElementById('tab-ganti');
   var btnMaju = document.getElementById('tab-maju');
   var btnR = document.getElementById('tab-riwayat');
+  var btnRapor = document.getElementById('tab-rapor');
   var btnD = document.getElementById('tab-dosen');
   var btnJ = document.getElementById('tab-jadwal');
   var btnL = document.getElementById('tab-report');
@@ -832,6 +928,7 @@ function updateUserUI(){
     
     btnH.style.display = 'none';
     btnR.style.display = 'none';
+    btnRapor.style.display = 'none';
     btnD.style.display = 'inline-block';
     btnJ.style.display = 'inline-block';
     btnL.style.display = 'inline-block';
@@ -872,6 +969,7 @@ function updateUserUI(){
     
     btnH.style.display = 'inline-block';
     btnR.style.display = 'inline-block';
+    btnRapor.style.display = 'inline-block';
     btnD.style.display = 'none';
     btnJ.style.display = 'none';
     btnL.style.display = 'none';
@@ -2657,6 +2755,215 @@ function cekNotifMaju() {
   w.style.display = 'block';
 }
 
+// =====================================================
+// RAPOR SAYA — Evaluasi Mandiri Dosen
+// =====================================================
+function renderRapor() {
+  if(!currentUser || isAdmin) return;
+
+  var myP = P.filter(function(p){ return p.dosenId === currentUser.id; });
+  var myG = G.filter(function(g){ return g.dosenId === currentUser.id; });
+  var myM = M.filter(function(m){ return m.dosenId === currentUser.id; });
+  var myJ = J.filter(function(j){ return j.dosenId === currentUser.id; });
+
+  // Avatar & nama
+  var parts = currentUser.nama.split(' ').filter(Boolean);
+  var init = parts.length===1 ? parts[0].substring(0,2).toUpperCase() : (parts[0][0]+(parts[parts.length-1][0])).toUpperCase();
+  document.getElementById('rapor-avatar').textContent = init;
+  document.getElementById('rapor-nama').textContent = currentUser.nama;
+
+  // Periode data
+  if(myP.length > 0) {
+    var dates = myP.map(function(p){ return parseTanggal(p.tanggal); }).filter(Boolean).sort(function(a,b){return a-b;});
+    var tFirst = new Date(dates[0]).toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric'});
+    var tLast  = new Date(dates[dates.length-1]).toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric'});
+    document.getElementById('rapor-periode').textContent = 'Periode: '+tFirst+' — '+tLast;
+  } else {
+    document.getElementById('rapor-periode').textContent = 'Belum ada data presensi';
+  }
+
+  // Hitung statistik dasar
+  var total  = myP.length;
+  var tepat  = myP.filter(function(p){ return p.color==='green'; }).length;
+  var lambat = myP.filter(function(p){ return p.color==='yellow'; }).length;
+  var sangat = myP.filter(function(p){ return p.color==='red'; }).length;
+  var pctTepat = total > 0 ? Math.round((tepat/total)*100) : 0;
+
+  document.getElementById('rapor-total').textContent = total+'x';
+  document.getElementById('rapor-tepat').textContent = tepat+'x';
+  document.getElementById('rapor-terlambat').textContent = lambat+'x';
+  document.getElementById('rapor-sangat').textContent = sangat+'x';
+
+  // Grade
+  var grade, gradeLabel, gradeColor, gradeBarColor, pesanUtama, pesanSub;
+  if(total === 0) {
+    grade='—'; gradeLabel='Belum ada data'; gradeColor='#888'; gradeBarColor='#ccc';
+    pesanUtama='Belum ada rekam presensi.';
+    pesanSub='Mulai rekam presensi Anda agar rapor dapat ditampilkan.';
+  } else if(pctTepat >= 90) {
+    grade='A'; gradeLabel='Sangat Disiplin'; gradeColor='#27500a'; gradeBarColor='#639922';
+    pesanUtama='🏆 Luar biasa! Tingkat kedisiplinan Anda sangat tinggi.';
+    pesanSub='Pertahankan konsistensi ini. Anda menjadi teladan bagi rekan dosen lainnya.';
+  } else if(pctTepat >= 80) {
+    grade='B'; gradeLabel='Disiplin'; gradeColor='#185fa5'; gradeBarColor='#3b82f6';
+    pesanUtama='👍 Bagus! Kehadiran Anda cukup baik dan konsisten.';
+    pesanSub='Masih ada ruang untuk mencapai grade A. Perhatikan jadwal agar lebih tepat waktu.';
+  } else if(pctTepat >= 65) {
+    grade='C'; gradeLabel='Cukup'; gradeColor='#633806'; gradeBarColor='#BA7517';
+    pesanUtama='⚠️ Perlu ditingkatkan. Cukup banyak sesi yang tidak tepat waktu.';
+    pesanSub='Perhatikan jadwal mengajar Anda. Keterlambatan berulang akan tercatat dalam evaluasi WK I.';
+  } else if(pctTepat >= 50) {
+    grade='D'; gradeLabel='Kurang Disiplin'; gradeColor='#92400e'; gradeBarColor='#f59e0b';
+    pesanUtama='🚨 Perhatian! Tingkat ketepatan waktu Anda di bawah standar.';
+    pesanSub='Mohon segera perbaiki kebiasaan kehadiran. Data ini akan menjadi bahan evaluasi di HRD.';
+  } else {
+    grade='E'; gradeLabel='Sangat Kurang'; gradeColor='#a32d2d'; gradeBarColor='#E24B4A';
+    pesanUtama='🚨 Kritis! Mayoritas sesi mengajar tidak tepat waktu.';
+    pesanSub='Segera lakukan perbaikan dan konsultasikan dengan Bidang Akademik / WK I sebelum evaluasi akhir.';
+  }
+
+  document.getElementById('rapor-grade-huruf').textContent = grade;
+  document.getElementById('rapor-grade-huruf').style.color = gradeBarColor;
+  document.getElementById('rapor-grade-label').textContent = gradeLabel;
+  document.getElementById('rapor-grade-label').style.color = '#fff';
+  document.getElementById('rapor-grade-bar').style.width = pctTepat+'%';
+  document.getElementById('rapor-grade-bar').style.background = gradeBarColor;
+  document.getElementById('rapor-grade-pct').textContent = pctTepat+'% tepat waktu ('+tepat+' dari '+total+' sesi)';
+
+  // Pesan evaluasi
+  var pesanBg = pctTepat>=80?'#eaf3de':pctTepat>=65?'#faeeda':'#fcebeb';
+  var pesanBorder = pctTepat>=80?'#97c459':pctTepat>=65?'#fac775':'#f09595';
+  var pesanTx = pctTepat>=80?'#27500a':pctTepat>=65?'#633806':'#791f1f';
+  document.getElementById('rapor-pesan').innerHTML =
+    '<div style="background:'+pesanBg+';border-left:4px solid '+pesanBorder+';border-radius:0 10px 10px 0;padding:12px 14px">'
+    +'<div style="font-size:14px;font-weight:700;color:'+pesanTx+';margin-bottom:4px">'+pesanUtama+'</div>'
+    +'<div style="font-size:12px;color:'+pesanTx+';line-height:1.6;opacity:.85">'+pesanSub+'</div>'
+    +(total>0 && lambat+sangat > 0
+      ? '<div style="margin-top:8px;font-size:11px;color:'+pesanTx+';opacity:.75">📌 Rata-rata keterlambatan: <b>'
+        +Math.round(myP.filter(function(p){return p.color==='yellow'||p.color==='red';}).reduce(function(s,p){return s+(Number(p.diff)||0);},0)/(lambat+sangat||1))
+        +' menit</b> dari '+( lambat+sangat )+'x sesi terlambat.</div>'
+      : '')
+    +'</div>';
+
+  // Mode perkuliahan
+  var ml = myP.filter(function(p){ return !p.modeKuliah||p.modeKuliah.indexOf('Luring')>-1; }).length;
+  var ms = myP.filter(function(p){ return p.modeKuliah&&p.modeKuliah.indexOf('Sinkronus')>-1&&p.modeKuliah.indexOf('Asinkronus')===-1; }).length;
+  var ma = myP.filter(function(p){ return p.modeKuliah&&p.modeKuliah.indexOf('Asinkronus')>-1; }).length;
+  var pA = total?Math.round(ma/total*100):0;
+  document.getElementById('rapor-mode').innerHTML = total===0 ? '<p class="empty">Belum ada data.</p>' :
+    [['🏫','Luring',ml,'#639922','#eaf3de'],['💻','Sinkronus',ms,'#185fa5','#e6f1fb'],['📝','Asinkronus',ma,'#BA7517','#faeeda']].map(function(x){
+      var pct = total?Math.round(x[2]/total*100):0;
+      return '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">'
+        +'<span style="font-size:14px">'+x[0]+'</span>'
+        +'<div style="flex:1;min-width:0">'
+          +'<div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:3px"><span style="color:#555;font-weight:500">'+x[1]+'</span><span style="font-weight:700;color:'+x[3]+'">'+x[2]+'x ('+pct+'%)</span></div>'
+          +'<div style="background:#f0f0ee;border-radius:20px;height:6px"><div style="width:'+pct+'%;height:6px;border-radius:20px;background:'+x[3]+'"></div></div>'
+        +'</div>'
+        +'</div>';
+    }).join('')
+    +(pA>=50?'<div style="margin-top:6px;padding:6px 10px;background:#faeeda;border-radius:7px;font-size:11px;color:#633806;font-weight:600">⚠️ Proporsi Asinkronus terlalu tinggi ('+pA+'%). Perlu perhatian.</div>':'');
+
+  // Rekap selesai
+  var sd = myP.filter(function(p){ return p.waktuSelesai&&p.waktuSelesai!==''; });
+  var sh = sd.filter(function(p){ return p.colorSelesai==='blue'; }).length;
+  var sm = sd.filter(function(p){ return p.colorSelesai==='red'; }).length;
+  var sn = total - sd.length;
+  document.getElementById('rapor-selesai').innerHTML = total===0 ? '<p class="empty">Belum ada data.</p>' :
+    [['✅','Tepat waktu selesai',sh,'#185fa5'],['⚠️','Pulang awal',sm,'#E24B4A'],['⏳','Belum direkam',sn,'#aaa']].map(function(x){
+      var pct = total?Math.round(x[2]/total*100):0;
+      return '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">'
+        +'<span style="font-size:13px">'+x[0]+'</span>'
+        +'<div style="flex:1;min-width:0">'
+          +'<div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:3px"><span style="color:#555;font-weight:500">'+x[1]+'</span><span style="font-weight:700;color:'+x[3]+'">'+x[2]+'x</span></div>'
+          +'<div style="background:#f0f0ee;border-radius:20px;height:6px"><div style="width:'+pct+'%;height:6px;border-radius:20px;background:'+x[3]+'"></div></div>'
+        +'</div>'
+        +'</div>';
+    }).join('');
+
+  // Tren bulanan
+  var BULAN = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
+  var trenData = BULAN.map(function(_, i){
+    var bln = myP.filter(function(p){ return Number(p.bulan)===(i+1); });
+    if(!bln.length) return {lbl:BULAN[i], pct:null, n:0};
+    var t2 = bln.filter(function(p){ return p.color==='green'; }).length;
+    return {lbl:BULAN[i], pct:Math.round(t2/bln.length*100), n:bln.length};
+  });
+  var hasAnyTren = trenData.some(function(t){ return t.n>0; });
+  document.getElementById('rapor-tren').innerHTML = !hasAnyTren ? '<p class="empty" style="font-size:12px">Belum cukup data.</p>' :
+    trenData.map(function(t){
+      if(t.n===0) return '<div style="display:flex;flex-direction:column;align-items:center;flex:1;gap:2px"><div style="flex:1;background:#f0f0ee;border-radius:4px 4px 0 0;width:100%;min-height:2px"></div><div style="font-size:9px;color:#ccc">'+t.lbl+'</div></div>';
+      var barH = Math.max(8, Math.round(t.pct * 0.7));
+      var bc = t.pct>=80?'#639922':t.pct>=60?'#BA7517':'#E24B4A';
+      return '<div style="display:flex;flex-direction:column;align-items:center;flex:1;gap:2px;cursor:default" title="'+t.lbl+': '+t.pct+'% ('+t.n+'x sesi)">'
+        +'<div style="font-size:9px;font-weight:700;color:'+bc+'">'+t.pct+'%</div>'
+        +'<div style="height:'+barH+'px;background:'+bc+';border-radius:4px 4px 0 0;width:100%"></div>'
+        +'<div style="font-size:9px;color:#888">'+t.lbl+'</div>'
+        +'</div>';
+    }).join('');
+
+  // Rekap per MK
+  var mkList = {};
+  myP.forEach(function(p){
+    if(!mkList[p.mk]) mkList[p.mk]={mk:p.mk,total:0,tepat:0,lambat:0,sangat:0,modeCount:{}};
+    mkList[p.mk].total++;
+    if(p.color==='green') mkList[p.mk].tepat++;
+    else if(p.color==='yellow') mkList[p.mk].lambat++;
+    else mkList[p.mk].sangat++;
+    var md = p.modeKuliah||'Luring';
+    mkList[p.mk].modeCount[md] = (mkList[p.mk].modeCount[md]||0)+1;
+  });
+  var mkArr = Object.values(mkList).sort(function(a,b){ return b.total-a.total; });
+  document.getElementById('rapor-mk').innerHTML = mkArr.length===0 ? '<p class="empty">Belum ada data.</p>' :
+    mkArr.map(function(mk){
+      var pct2 = Math.round(mk.tepat/mk.total*100);
+      var bc2 = pct2>=80?'#639922':pct2>=60?'#BA7517':'#E24B4A';
+      var modeStr = Object.keys(mk.modeCount).map(function(k){ return k.replace('Daring ','').replace('Luring','Luring')+' ('+mk.modeCount[k]+'x)'; }).join(', ');
+      return '<div style="padding:10px 0;border-bottom:1px solid #f0f0ee">'
+        +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px">'
+          +'<div style="font-size:13px;font-weight:600;color:#1a1a1a;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+mk.mk+'</div>'
+          +'<div style="font-size:13px;font-weight:800;color:'+bc2+';margin-left:8px;flex-shrink:0">'+pct2+'%</div>'
+        +'</div>'
+        +'<div style="background:#f0f0ee;border-radius:20px;height:7px;margin-bottom:5px;overflow:hidden">'
+          +'<div style="display:flex;height:7px;border-radius:20px;overflow:hidden">'
+            +(mk.tepat?'<div style="flex:'+mk.tepat+';background:#639922"></div>':'')
+            +(mk.lambat?'<div style="flex:'+mk.lambat+';background:#BA7517"></div>':'')
+            +(mk.sangat?'<div style="flex:'+mk.sangat+';background:#E24B4A"></div>':'')
+          +'</div>'
+        +'</div>'
+        +'<div style="font-size:10px;color:#888">'+mk.total+'x sesi · ✓ '+mk.tepat+'x tepat · ⚠ '+mk.lambat+'x terlambat · ✗ '+mk.sangat+'x sangat terlambat</div>'
+        +'<div style="font-size:10px;color:#aaa;margin-top:2px">Mode: '+modeStr+'</div>'
+        +'</div>';
+    }).join('');
+
+  // Riwayat pengajuan (ganti + maju)
+  var allPengajuan = [];
+  myG.forEach(function(g){ allPengajuan.push({type:'Pengganti',tgl:g.ganti||g.asli,mk:g.mk,status:g.statusAcc,info:g.asli+' → '+g.ganti+' · '+g.jam}); });
+  myM.forEach(function(m){ allPengajuan.push({type:'Maju',tgl:m.tglRaw||'',mk:m.mk,status:m.statusAcc,info:m.tgl+' · '+m.jam}); });
+  allPengajuan.sort(function(a,b){ return (b.tgl||'').localeCompare(a.tgl||''); });
+
+  document.getElementById('rapor-pengajuan').innerHTML = allPengajuan.length===0
+    ? '<p class="empty">Belum ada pengajuan jadwal pengganti maupun jadwal maju.</p>'
+    : '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">'
+      + allPengajuan.map(function(ap){
+          var isGanti = ap.type==='Pengganti';
+          var typeBg = isGanti?'#e6f1fb':'#fef3c7';
+          var typeTx = isGanti?'#185fa5':'#92400e';
+          var typeLbl = isGanti?'🔄 Pengganti':'⏩ Maju';
+          var stBg = ap.status==='Disetujui'?'#eaf3de':ap.status==='Ditolak'?'#fcebeb':'#f5f5f3';
+          var stTx = ap.status==='Disetujui'?'#27500a':ap.status==='Ditolak'?'#a32d2d':'#888';
+          var stIcon = ap.status==='Disetujui'?'✅':ap.status==='Ditolak'?'❌':'⏳';
+          return '<div style="background:#fff;border:1px solid #e5e5e3;border-radius:10px;padding:8px 10px;min-width:0">'
+            +'<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:5px;gap:4px">'
+              +'<span style="font-size:10px;font-weight:600;padding:1px 7px;border-radius:20px;background:'+typeBg+';color:'+typeTx+';white-space:nowrap">'+typeLbl+'</span>'
+              +'<span style="font-size:10px;font-weight:600;padding:1px 7px;border-radius:20px;background:'+stBg+';color:'+stTx+';white-space:nowrap">'+stIcon+' '+ap.status+'</span>'
+            +'</div>'
+            +'<div style="font-size:12px;font-weight:600;color:#1a1a1a;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-bottom:2px">'+ap.mk+'</div>'
+            +'<div style="font-size:10px;color:#888;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+ap.info+'</div>'
+            +'</div>';
+        }).join('')
+      +'</div>';
+}
+
 function cekNotifGanti() { cekNotifMaju(); }
 
 function fillAll(){
@@ -2684,6 +2991,7 @@ function pg(p,btn){
     var rd=document.getElementById('rd');if(rd){rd.innerHTML='<option value="all">Semua dosen</option>';D.forEach(function(d){var o=document.createElement('option');o.value=d.id;o.textContent=d.nama;rd.appendChild(o);});}
     renderR();
   }
+  if(p==='rapor'){ renderRapor(); }
 }
 document.querySelectorAll('.mo').forEach(function(el){el.addEventListener('click',function(e){if(e.target===this)this.classList.remove('open');});});
 function cm(id){document.getElementById(id).classList.remove('open');}
