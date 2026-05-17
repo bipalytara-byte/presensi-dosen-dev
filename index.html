@@ -194,7 +194,7 @@ tr:last-child td{border-bottom:none}
   </div>
   <div class="login-footer">
     Powered by <b>Skuro Production</b><br>
-    <span class="version-tag">v3.0</span>
+    <span class="version-tag">v4.0</span>
   </div>
 </div>
 
@@ -2266,8 +2266,6 @@ function donut(id,sl,tot){
   sl.forEach(function(x){if(!x.v)return;var a=x.v/t*Math.PI*2;ctx.beginPath();ctx.moveTo(sz/2,sz/2);ctx.arc(sz/2,sz/2,42,s,s+a);ctx.closePath();ctx.fillStyle=x.c;ctx.fill();s+=a;});
   ctx.beginPath();ctx.arc(sz/2,sz/2,28,0,Math.PI*2);ctx.fillStyle='#fff';ctx.fill();
   ctx.fillStyle='#1a1a1a';ctx.font='500 12px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(tot+'x',sz/2,sz/2);
-}
-
 }
 
 // =====================================================
