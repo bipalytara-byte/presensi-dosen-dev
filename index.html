@@ -37,7 +37,7 @@ select:focus,input:focus{border-color:#888}
 .entry{display:flex;justify-content:space-between;align-items:flex-start;padding:10px 0;border-bottom:1px solid #f0f0ee;gap:12px}
 .entry:last-child{border-bottom:none}
 .em{flex:1}.en{font-size:14px;font-weight:500}.es{font-size:12px;color:#888;margin-top:2px}
-.stat-row{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:1rem}
+.stat-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin-bottom:1rem}
 .stat{background:#f5f5f3;border-radius:8px;padding:12px;text-align:center}
 .stat-num{font-size:22px;font-weight:500}.stat-label{font-size:12px;color:#888;margin-top:2px}
 .ai{background:#e6f1fb;border-left:3px solid #85b7eb;border-radius:0 8px 8px 0;padding:10px 14px;font-size:13px;color:#185fa5;margin-bottom:1rem}
@@ -221,6 +221,7 @@ tr:last-child td{border-bottom:none}
 <div class="tab-bar">
   <button class="tab" id="tab-hadir" onclick="pg('hadir',this)">Presensi</button>
   <button class="tab" id="tab-ganti" onclick="pg('ganti',this)">Jadwal Pengganti</button>
+  <button class="tab" id="tab-maju" onclick="pg('maju',this)">Jadwal Maju</button>
   <button class="tab" id="tab-riwayat" onclick="pg('riwayat',this)">Riwayat Saya</button>
   <button class="tab" id="tab-report" onclick="pg('report',this)" style="display:none">Laporan Dashboard</button>
   <button class="tab" id="tab-dosen" onclick="pg('dosen',this)" style="display:none">Kelola Dosen</button>
@@ -319,6 +320,43 @@ tr:last-child td{border-bottom:none}
   </div>
 </div>
 
+<div id="page-maju" class="page">
+  <div class="card" id="form-pengajuan-maju">
+    <div class="sec">📅 Pengajuan Jadwal Maju</div>
+    <div class="ai" style="margin-bottom:1rem">
+      <b>Apa itu Jadwal Maju?</b><br>
+      Jadwal maju digunakan ketika kelas sebelumnya kosong dan perkuliahan dapat dimulai <b>lebih awal dari jam semestinya</b> — bukan mengganti pertemuan lain. Berbeda dengan jadwal pengganti, jadwal maju <b>boleh terjadi pada tanggal yang sama</b>.
+    </div>
+    <div class="as" id="maju-info" style="display:none"></div>
+    <div class="field">
+      <label>Mata kuliah</label>
+      <select id="mmk"><option value="">— Pilih mata kuliah —</option></select>
+    </div>
+    <div class="field">
+      <label>Tanggal perkuliahan</label>
+      <input type="date" id="mtgl"/>
+    </div>
+    <div class="row">
+      <div class="field"><label>Jam Mulai (Baru / Lebih Awal)</label><input type="time" id="mjam_mulai"/></div>
+      <div class="field"><label>Jam Selesai</label><input type="time" id="mjam_selesai"/></div>
+    </div>
+    <div class="row">
+      <div class="field"><label>Mode</label><select id="mmode"><option value="luring">Luring</option><option value="daring">Daring</option></select></div>
+      <div class="field"><label>Tempat / link</label><input type="text" id="mtempat" placeholder="Ruang 201 atau link Zoom"/></div>
+    </div>
+    <div class="field"><label>Keterangan / Alasan Pemajuan</label><textarea id="mket" rows="2" placeholder="Contoh: Kelas sebelumnya kosong, mahasiswa sudah siap lebih awal..."></textarea></div>
+    <div class="field">
+      <label>Tautan Bukti / Kesepakatan (Opsional)</label>
+      <input type="url" id="mbukti" placeholder="Link GDrive / Screenshot WA Kesepakatan dgn Mahasiswa..."/>
+    </div>
+    <button class="btn btn-primary" onclick="kirimMaju()">Ajukan Jadwal Maju</button>
+  </div>
+  <div id="lmw" style="display:none">
+    <div class="sec" id="maju-title-list" style="margin-top:.5rem">Daftar Pengajuan Jadwal Maju</div>
+    <div class="card" id="lm2"></div>
+  </div>
+</div>
+
 <div id="page-riwayat" class="page">
   <div class="card">
     <div class="sec">Rekam Jejak Presensi Anda</div>
@@ -412,6 +450,7 @@ tr:last-child td{border-bottom:none}
   <div class="stat-row">
     <div class="stat"><div class="stat-num" id="rt">0</div><div class="stat-label">Total presensi</div></div>
     <div class="stat"><div class="stat-num" id="rg">0</div><div class="stat-label">Jadwal pengganti</div></div>
+    <div class="stat"><div class="stat-num" id="rm2">0</div><div class="stat-label">Jadwal maju</div></div>
     <div class="stat"><div class="stat-num" id="rp">0%</div><div class="stat-label">Tepat waktu hadir</div></div>
     <div class="stat"><div class="stat-num" id="rs">0%</div><div class="stat-label">Tepat waktu selesai</div></div>
   </div>
@@ -566,7 +605,7 @@ const DOSEN_PASS = {
   "d017":"ZNZ807","d018":"RNG614","d019":"LYW251","d020":"XWH661",
   "d021":"TOU503"
 };
-let D=[],J=[],P=[],G=[];
+let D=[],J=[],P=[],G=[],M=[];
 let eDos=null,eJad=null,tempMk=[];
 let actId=null,actJad=null;
 
@@ -679,13 +718,15 @@ async function refreshDataLokal() {
       get({action:'getDosen'}), 
       get({action:'getJadwal'}), 
       get({action:'getPresensi'}), 
-      get({action:'getGanti'})
+      get({action:'getGanti'}),
+      get({action:'getMaju'})
     ]);
     
     D = r[0].data || [];
     J = r[1].data || [];
     P = r[2].data || [];
     G = r[3].data || [];
+    M = r[4].data || [];
     setSB('ok'); 
     
     var oldRd = document.getElementById('rd') ? document.getElementById('rd').value : 'all';
@@ -701,7 +742,8 @@ async function refreshDataLokal() {
     renderD(); 
     renderJ(); 
     renderHari(); 
-    renderG(); 
+    renderG();
+    renderM();
     renderRiwayatSaya();
     
     if(document.getElementById('page-report').classList.contains('active')) {
@@ -717,8 +759,8 @@ async function refreshDataLokal() {
 async function loadThenShow(){
   setSB('sy');
   try{
-    var r=await Promise.all([get({action:'getDosen'}),get({action:'getJadwal'}),get({action:'getPresensi'}),get({action:'getGanti'})]);
-    D=r[0].data||[];J=r[1].data||[];P=r[2].data||[];G=r[3].data||[];
+    var r=await Promise.all([get({action:'getDosen'}),get({action:'getJadwal'}),get({action:'getPresensi'}),get({action:'getGanti'}),get({action:'getMaju'})]);
+    D=r[0].data||[];J=r[1].data||[];P=r[2].data||[];G=r[3].data||[];M=r[4].data||[];
     setSB('ok');updateUserUI();fillAll();restoreSesi();
   }catch(e){setSB('er');}
 }
@@ -726,6 +768,7 @@ async function loadThenShow(){
 function updateUserUI(){
   var btnH = document.getElementById('tab-hadir');
   var btnG = document.getElementById('tab-ganti');
+  var btnMaju = document.getElementById('tab-maju');
   var btnR = document.getElementById('tab-riwayat');
   var btnD = document.getElementById('tab-dosen');
   var btnJ = document.getElementById('tab-jadwal');
@@ -741,9 +784,12 @@ function updateUserUI(){
     btnD.style.display = 'inline-block';
     btnJ.style.display = 'inline-block';
     btnL.style.display = 'inline-block';
+    btnMaju.style.display = 'inline-block';
     
     document.getElementById('form-pengajuan-ganti').style.display = 'none';
     document.getElementById('ganti-title-list').textContent = 'Daftar Seluruh Pengajuan (Admin)';
+    document.getElementById('form-pengajuan-maju').style.display = 'none';
+    document.getElementById('maju-title-list').textContent = 'Daftar Seluruh Pengajuan Jadwal Maju (Admin)';
     
     pg('report', btnL);
     
@@ -761,18 +807,29 @@ function updateUserUI(){
     gi.textContent='Pengajuan atas nama: '+currentUser.nama;
     gi.style.display='block';
     
+    var mi=document.getElementById('maju-info');
+    mi.textContent='Pengajuan atas nama: '+currentUser.nama;
+    mi.style.display='block';
+    
     var gmk=document.getElementById('gmk');
     gmk.innerHTML='<option value="">— Pilih mata kuliah —</option>';
     (currentUser.mk||[]).forEach(function(m){var o=document.createElement('option');o.textContent=m;gmk.appendChild(o);});
+    
+    var mmk=document.getElementById('mmk');
+    mmk.innerHTML='<option value="">— Pilih mata kuliah —</option>';
+    (currentUser.mk||[]).forEach(function(m){var o=document.createElement('option');o.textContent=m;mmk.appendChild(o);});
     
     btnH.style.display = 'inline-block';
     btnR.style.display = 'inline-block';
     btnD.style.display = 'none';
     btnJ.style.display = 'none';
     btnL.style.display = 'none';
+    btnMaju.style.display = 'inline-block';
     
     document.getElementById('form-pengajuan-ganti').style.display = 'block';
     document.getElementById('ganti-title-list').textContent = 'Riwayat Pengajuan Saya';
+    document.getElementById('form-pengajuan-maju').style.display = 'block';
+    document.getElementById('maju-title-list').textContent = 'Riwayat Pengajuan Jadwal Maju Saya';
     
     pg('hadir', btnH);
   }
@@ -1759,22 +1816,26 @@ function renderR(){
   var daysInRange = getHariInRange(start, end);
   var data=P;
   var gf=G;
+  var mf2=M;
 
   if(start) {
     var tsStart = new Date(start).setHours(0,0,0,0);
     data = data.filter(function(p){ return parseTanggal(p.tanggal) >= tsStart; });
     gf = gf.filter(function(g){ return new Date(g.ganti).getTime() >= tsStart; });
+    mf2 = mf2.filter(function(mx){ return mx.tglRaw && new Date(mx.tglRaw).getTime() >= tsStart; });
   }
   
   if(end) {
     var tsEnd = new Date(end).setHours(23,59,59,999);
     data = data.filter(function(p){ return parseTanggal(p.tanggal) <= tsEnd; });
     gf = gf.filter(function(g){ return new Date(g.ganti).getTime() <= tsEnd; });
+    mf2 = mf2.filter(function(mx){ return mx.tglRaw && new Date(mx.tglRaw).getTime() <= tsEnd; });
   }
 
   if(df!=='all') {
     data=data.filter(function(p){return p.dosenId===df;});
     gf=gf.filter(function(g){return g.dosenId===df;});
+    mf2=mf2.filter(function(mx){return mx.dosenId===df;});
   }
   
   var h=data.filter(function(p){return p.color==='green';}).length;
@@ -1792,6 +1853,7 @@ function renderR(){
   
   document.getElementById('rt').textContent=data.length;
   document.getElementById('rg').textContent=gf.length;
+  var rm2el=document.getElementById('rm2');if(rm2el)rm2el.textContent=mf2.length;
   document.getElementById('rp').textContent=data.length?Math.round(h/data.length*100)+'%':'0%';
   document.getElementById('rs').textContent=sd.length?Math.round(sh/sd.length*100)+'%':'0%';
   
@@ -2206,43 +2268,150 @@ function donut(id,sl,tot){
   ctx.fillStyle='#1a1a1a';ctx.font='500 12px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(tot+'x',sz/2,sz/2);
 }
 
-function cekNotifGanti() {
+}
+
+// =====================================================
+// FITUR: JADWAL MAJU
+// =====================================================
+async function kirimMaju(){
+  if(!currentUser){alert('Hanya dosen yang bisa mengajukan jadwal maju.');return;}
+  var mk=document.getElementById('mmk').value;
+  var tgl=document.getElementById('mtgl').value;
+  var jMulai=document.getElementById('mjam_mulai').value;
+  var jSelesai=document.getElementById('mjam_selesai').value;
+  
+  if(!mk||!tgl||!jMulai||!jSelesai){alert('Lengkapi field wajib (Mata kuliah, Tanggal, Jam Mulai & Selesai).');return;}
+  
+  // Validasi: jam maju harus lebih awal dari jam jadwal asli
+  var jadwalAsli = J.find(function(j){ return j.dosenId === currentUser.id && j.mk === mk; });
+  if(jadwalAsli && jMulai >= jStr(jadwalAsli.jamMulai)){
+    if(!confirm('⚠️ Jam yang diajukan ('+jMulai+') tidak lebih awal dari jam jadwal asli ('+jStr(jadwalAsli.jamMulai)+').\nTetap ajukan?')) return;
+  }
+  
+  var jamGabung = jMulai + ' - ' + jSelesai;
+  var tglFormatted = new Date(tgl+'T00:00:00').toLocaleDateString('id-ID',{day:'2-digit',month:'2-digit',year:'numeric'});
+  
+  var rec={
+    id:Date.now().toString(), dosenId:currentUser.id, dosen:currentUser.nama, mk:mk, 
+    tgl:tglFormatted, tglRaw:tgl, jam:jamGabung,
+    mode:document.getElementById('mmode').value, 
+    tempat:document.getElementById('mtempat').value,
+    ket:document.getElementById('mket').value, 
+    diajukan:new Date().toLocaleDateString('id-ID'),
+    bukti:document.getElementById('mbukti').value, 
+    statusAcc:'Menunggu', alasanTolak:''
+  };
+  setSB('sy');
+  try{
+    await post({action:'saveMaju',data:rec});
+    M.push(rec);setSB('ok');renderM();
+    ['mmk','mtgl','mjam_mulai','mjam_selesai','mtempat','mket','mbukti'].forEach(function(id){document.getElementById(id).value='';});
+    document.getElementById('mmode').value='luring';
+    alert('✅ Jadwal maju berhasil diajukan!\nMenunggu persetujuan Admin / Bidang Akademik.');
+  }catch(e){setSB('er');alert('Gagal: '+e.message);}
+}
+
+async function setStatusMaju(id, status) {
+  var alasan = '';
+  if (status === 'Ditolak') {
+    alasan = prompt('Masukkan alasan penolakan (opsional):');
+    if (alasan === null) return;
+  } else {
+    if (!confirm('Setujui pengajuan jadwal maju ini?')) return;
+  }
+  setSB('sy');
+  try {
+    await post({action:'updateStatusMaju', id:id, status:status, alasan:alasan});
+    var idx = M.findIndex(function(m){return m.id === id;});
+    if (idx > -1) { M[idx].statusAcc = status; M[idx].alasanTolak = alasan; }
+    setSB('ok'); renderM();
+    cekNotifMaju();
+  } catch(e) { setSB('er'); alert('Gagal: ' + e.message); }
+}
+
+function renderM(){
+  var w=document.getElementById('lmw'),el=document.getElementById('lm2');
+  if(!w||!el)return;
+  
+  var data = isAdmin ? M : (currentUser ? M.filter(function(m){return m.dosenId===currentUser.id;}) : []);
+  
+  if(!data.length){if(w)w.style.display='none';return;}
+  w.style.display='block';
+  
+  el.innerHTML=data.slice().reverse().map(function(m){
+    var stBadge = m.statusAcc === 'Disetujui' ? '<span class="badge green">Disetujui</span>' :
+                  m.statusAcc === 'Ditolak' ? '<span class="badge red">Ditolak</span>' :
+                  '<span class="badge yellow">Menunggu ACC</span>';
+    var typeBadge = '<span style="display:inline-block;background:#fef3c7;color:#92400e;border:1px solid #fde68a;border-radius:20px;padding:2px 8px;font-size:11px;font-weight:600;margin-left:6px">⏩ Jadwal Maju</span>';
+
+    var btnAdmin = '';
+    if(isAdmin && m.statusAcc === 'Menunggu') {
+       btnAdmin = '<div style="margin-top:10px;padding-top:10px;border-top:1px dashed #e5e5e3;display:flex;gap:8px"><button class="btn btn-sm btn-primary" onclick="setStatusMaju(\''+m.id+'\', \'Disetujui\')">Setujui</button><button class="btn btn-sm btn-danger" onclick="setStatusMaju(\''+m.id+'\', \'Ditolak\')">Tolak</button></div>';
+    }
+
+    var buktiLink = m.bukti ? '<br><a href="'+m.bukti+'" target="_blank" style="color:#185fa5;text-decoration:none;font-weight:500">Lihat Lampiran ↗</a>' : '';
+    var tolakMsg = m.statusAcc === 'Ditolak' && m.alasanTolak ? '<div style="margin-top:4px;font-size:12px;color:#a32d2d;background:#fcebeb;padding:4px 8px;border-radius:4px">Alasan: '+m.alasanTolak+'</div>' : '';
+    var modeLabel = m.mode === 'daring' ? 'Daring' : 'Luring';
+
+    return '<div class="entry"><div class="em"><div class="en" style="display:flex;justify-content:space-between;align-items:flex-start"><span>'+m.mk+typeBadge+'<br><span style="font-size:12px;color:#888;font-weight:normal">'+m.dosen+'</span></span> '+stBadge+'</div><div class="es">Tanggal: <b>'+m.tgl+'</b> · Jam: <b>'+m.jam+'</b> · <b>'+modeLabel+'</b>'+(m.tempat?' · '+m.tempat:'')+buktiLink+'</div>'+(m.ket?'<div class="es" style="color:#666">Ket: '+m.ket+'</div>':'')+tolakMsg+btnAdmin+'</div></div>';
+  }).join('');
+}
+
+function cekNotifMaju() {
   var w = document.getElementById('notif-ganti');
   if(!w || !currentUser || isAdmin) return;
 
   var today = new Date();
   today.setHours(0,0,0,0);
 
-  var notifs = G.filter(function(g) {
+  var notifG = G.filter(function(g) {
     return g.dosenId === currentUser.id &&
            (g.statusAcc === 'Disetujui' || g.statusAcc === 'Ditolak') &&
            new Date(g.ganti) >= today;
   });
+  
+  var notifM = M.filter(function(m) {
+    return m.dosenId === currentUser.id &&
+           (m.statusAcc === 'Disetujui' || m.statusAcc === 'Ditolak') &&
+           new Date(m.tglRaw) >= today;
+  });
 
-  if(notifs.length === 0) {
-    w.style.display = 'none';
-    return;
-  }
-
-  w.innerHTML = notifs.map(function(g) {
+  var all = [];
+  notifG.forEach(function(g){
     var isAcc = g.statusAcc === 'Disetujui';
     var bg = isAcc ? '#eaf3de' : '#fcebeb';
     var border = isAcc ? '#97c459' : '#f09595';
     var color = isAcc ? '#27500a' : '#791f1f';
     var icon = isAcc ? '✅' : '❌';
-    return '<div style="background:'+bg+'; border:1px solid '+border+'; color:'+color+'; padding:10px 14px; border-radius:8px; margin-bottom:8px; font-size:13px; font-weight:500;">' +
-           icon + ' Pengajuan ganti jadwal <b>' + g.mk + '</b> (' + g.asli + ' &rarr; ' + g.ganti + ') telah <b>' + g.statusAcc + '</b>.' +
+    all.push('<div style="background:'+bg+'; border:1px solid '+border+'; color:'+color+'; padding:10px 14px; border-radius:8px; margin-bottom:8px; font-size:13px; font-weight:500;">' +
+           icon + ' Jadwal <b>Pengganti</b> — <b>' + g.mk + '</b> (' + g.asli + ' → ' + g.ganti + ') telah <b>' + g.statusAcc + '</b>.' +
            (g.alasanTolak ? ' Alasan: ' + g.alasanTolak : '') +
-           '</div>';
-  }).join('');
+           '</div>');
+  });
+  notifM.forEach(function(m){
+    var isAcc = m.statusAcc === 'Disetujui';
+    var bg = isAcc ? '#fef3c7' : '#fcebeb';
+    var border = isAcc ? '#fde68a' : '#f09595';
+    var color = isAcc ? '#92400e' : '#791f1f';
+    var icon = isAcc ? '⏩' : '❌';
+    all.push('<div style="background:'+bg+'; border:1px solid '+border+'; color:'+color+'; padding:10px 14px; border-radius:8px; margin-bottom:8px; font-size:13px; font-weight:500;">' +
+           icon + ' Jadwal <b>Maju</b> — <b>' + m.mk + '</b> (' + m.tgl + ' · ' + m.jam + ') telah <b>' + m.statusAcc + '</b>.' +
+           (m.alasanTolak ? ' Alasan: ' + m.alasanTolak : '') +
+           '</div>');
+  });
+
+  if(all.length === 0) { w.style.display='none'; return; }
+  w.innerHTML = all.join('');
   w.style.display = 'block';
 }
+
+function cekNotifGanti() { cekNotifMaju(); }
 
 function fillAll(){
   fillJadwalDosen();
   var rd=document.getElementById('rd');if(rd){rd.innerHTML='<option value="all">Semua dosen</option>';D.forEach(function(d){var o=document.createElement('option');o.value=d.id;o.textContent=d.nama;rd.appendChild(o);});}
   var jfd=document.getElementById('jfd');if(jfd){jfd.innerHTML='<option value="all">Semua dosen</option>';D.forEach(function(d){var o=document.createElement('option');o.value=d.id;o.textContent=d.nama;jfd.appendChild(o);});}
-  renderD();renderJ();renderHari();renderG();
+  renderD();renderJ();renderHari();renderG();renderM();
   renderRiwayatSaya();
   updateUserUI();
   cekNotifGanti();
