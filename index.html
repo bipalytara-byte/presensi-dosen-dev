@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Lytara Presensi Dosen — LIVE v3.0</title>
+<title>LYTARA — Layanan Tracking Aktivitas dan Realisasi Akademik v4.5</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:15px;color:#1a1a1a;background:#f5f5f3}
@@ -94,6 +94,21 @@ tr:last-child td{border-bottom:none}
 /* Prevent grid blowout from long URLs/text */
 [style*="grid-template-columns"] > * { min-width: 0; }
 
+@media print {
+  body { background: #fff !important; }
+  .login-screen, header, .tab-bar, .app-footer,
+  #rapor-filter-semester, button, select,
+  .card:not(#rapor-header-card):not(#rapor-pesan):not(.rapor-print-keep),
+  #card-preview-rapor-admin .btn { display: none !important; }
+  .page { display: none !important; }
+  #page-rapor, #page-rapor * { display: block !important; }
+  #rapor-konten, #rapor-konten * { display: revert !important; }
+  .app { max-width: 100% !important; padding: 0 !important; }
+  .card { break-inside: avoid; border: 1px solid #ddd !important; }
+  #rapor-tren div { display: inline-flex !important; }
+  .rapor-print-only { display: block !important; }
+}
+
 /* ===== TOP 10 LEADERBOARD ===== */
 .lb-tabs{display:flex;gap:4px;margin-bottom:12px;background:#f5f5f3;border-radius:10px;padding:3px}
 .lb-tab{flex:1;padding:7px 10px;text-align:center;font-size:12px;font-weight:500;cursor:pointer;border-radius:8px;border:none;background:none;color:#888;font-family:inherit}
@@ -157,8 +172,9 @@ tr:last-child td{border-bottom:none}
   <div class="login-box">
     
     <div id="login-dosen-view">
-      <div class="login-logo">👨‍🏫</div>
-      <div class="login-title">Lytara Presensi Dosen</div>
+      <div class="login-logo">🎓</div>
+      <div class="login-title" style="font-size:20px;font-weight:800;letter-spacing:-.5px">LYTARA</div>
+      <div class="login-sub" style="font-size:11px;color:#aaa;margin-bottom:4px">Layanan Tracking Aktivitas dan Realisasi Akademik</div>
       <div class="login-sub">Masuk dengan akun yang diberikan</div>
       <div class="field">
         <label>Nama dosen</label>
@@ -196,7 +212,7 @@ tr:last-child td{border-bottom:none}
   </div>
   <div class="login-footer">
     Powered by <b>Skuro Production</b><br>
-    <span class="version-tag">v3.0</span>
+    <span class="version-tag">LYTARA v4.5</span>
   </div>
 </div>
 
@@ -204,8 +220,8 @@ tr:last-child td{border-bottom:none}
 <header>
   <div style="display:flex;justify-content:space-between;align-items:center">
     <div>
-      <h1>Lytara Presensi <span class="dev-badge">LIVE</span></h1>
-      <p id="clk">-</p>
+      <h1><span style="font-weight:800;letter-spacing:-.5px">LYTARA</span> <span class="dev-badge">LIVE</span></h1>
+      <p id="clk" style="font-size:10px;color:#999">Layanan Tracking Aktivitas dan Realisasi Akademik</p>
     </div>
     <div style="display:flex;align-items:center;gap:6px;flex-shrink:0">
       <button class="btn btn-sm" onclick="refreshDataLokal()" style="display:flex;align-items:center;gap:4px;padding:4px 10px;background:#f5f5f3;border:1px solid #e5e5e3;color:#555;font-weight:500" title="Tarik data terbaru dari server">
@@ -376,17 +392,36 @@ tr:last-child td{border-bottom:none}
 <!-- ===== HALAMAN RAPOR SAYA ===== -->
 <div id="page-rapor" class="page">
 
+  <!-- Filter & Aksi -->
+  <div class="card" style="margin-bottom:1rem;padding:14px">
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
+      <div style="flex:1;min-width:200px">
+        <label style="font-size:11px;color:#888;text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:4px">Filter Semester / Periode</label>
+        <select id="rapor-filter-semester" onchange="renderRapor()" style="font-size:13px;padding:6px 10px;width:100%">
+          <option value="all">Semua Periode</option>
+        </select>
+      </div>
+      <div style="display:flex;gap:6px;flex-shrink:0;margin-top:18px">
+        <button class="btn btn-sm btn-blue" onclick="exportRaporPDF()" style="display:flex;align-items:center;gap:4px;font-weight:500">📄 Export PDF</button>
+        <button class="btn btn-sm" onclick="window.print()" style="display:flex;align-items:center;gap:4px">🖨️ Print</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Konten rapor (diisi JS) -->
+  <div id="rapor-konten">
+
   <!-- Header rapor -->
-  <div class="card" style="background:linear-gradient(135deg,#1a1a1a 0%,#2d2d2d 100%);border:none;color:#fff;margin-bottom:1rem">
+  <div class="card" id="rapor-header-card" style="background:linear-gradient(135deg,#1a1a1a 0%,#2d2d2d 100%);border:none;color:#fff;margin-bottom:1rem">
     <div style="display:flex;align-items:center;gap:14px;margin-bottom:14px">
       <div id="rapor-avatar" style="width:52px;height:52px;border-radius:50%;background:#fff;color:#1a1a1a;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:800;flex-shrink:0"></div>
       <div>
         <div id="rapor-nama" style="font-size:16px;font-weight:700;line-height:1.3"></div>
-        <div style="font-size:12px;color:#aaa;margin-top:2px">Evaluasi Mandiri Presensi Perkuliahan</div>
+        <div style="font-size:12px;color:#aaa;margin-top:2px">Evaluasi Presensi Perkuliahan · LYTARA v4.5</div>
         <div id="rapor-periode" style="font-size:11px;color:#888;margin-top:2px"></div>
+        <div id="rapor-semester-label" style="font-size:11px;color:#fde68a;margin-top:2px;font-weight:600"></div>
       </div>
     </div>
-    <!-- Grade besar -->
     <div style="display:flex;align-items:center;gap:16px">
       <div style="text-align:center">
         <div id="rapor-grade-huruf" style="font-size:48px;font-weight:900;line-height:1"></div>
@@ -422,10 +457,8 @@ tr:last-child td{border-bottom:none}
     </div>
   </div>
 
-  <!-- Pesan evaluasi -->
   <div id="rapor-pesan" class="card" style="margin-bottom:1rem"></div>
 
-  <!-- Rekap mode & kehadiran -->
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:1rem">
     <div class="card" style="margin-bottom:0;padding:14px">
       <div class="sec" style="margin-bottom:10px">Mode Perkuliahan</div>
@@ -437,7 +470,6 @@ tr:last-child td{border-bottom:none}
     </div>
   </div>
 
-  <!-- Tren bulanan mini -->
   <div class="card" style="margin-bottom:1rem">
     <div class="sec" style="margin-bottom:12px">📈 Tren Ketepatan Hadir Bulanan</div>
     <div id="rapor-tren" style="display:flex;align-items:flex-end;gap:4px;height:80px"></div>
@@ -448,23 +480,21 @@ tr:last-child td{border-bottom:none}
     </div>
   </div>
 
-  <!-- Rekap per mata kuliah -->
   <div class="card" style="margin-bottom:1rem">
     <div class="sec" style="margin-bottom:12px">📚 Rekap per Mata Kuliah</div>
     <div id="rapor-mk"></div>
   </div>
 
-  <!-- Riwayat pengajuan (ganti + maju) -->
   <div class="card" style="margin-bottom:1rem">
     <div class="sec" style="margin-bottom:10px">📋 Riwayat Pengajuan Jadwal</div>
     <div id="rapor-pengajuan"></div>
   </div>
 
-  <!-- Catatan kaki -->
   <div style="background:#f5f5f3;border-radius:10px;padding:12px 14px;font-size:11px;color:#888;line-height:1.7;margin-bottom:1rem">
-    ℹ️ Data rapor ini diambil langsung dari server akademik dan mencerminkan rekam jejak presensi Anda yang tersimpan. Rapor ini bersifat <b>informatif</b> sebagai bahan evaluasi mandiri sebelum menjadi penilaian resmi oleh WK I dan HRD. Jika ada ketidaksesuaian, segera hubungi Bidang Akademik.
+    ℹ️ Data rapor ini diambil langsung dari server akademik. Rapor bersifat <b>informatif</b> sebagai bahan evaluasi mandiri sebelum menjadi penilaian resmi oleh WK I dan HRD. Jika ada ketidaksesuaian, segera hubungi Bidang Akademik. · <b>LYTARA v4.5</b> · Skuro Production
   </div>
 
+  </div><!-- /rapor-konten -->
 </div>
 
 <div id="page-dosen" class="page">
@@ -630,7 +660,24 @@ tr:last-child td{border-bottom:none}
     <div id="list-riwayat-ganti"><p class="empty">Belum ada data.</p></div>
   </div>
 
-  <!-- FITUR 8: RIWAYAT JADWAL MAJU PER DOSEN (MONITORING WK I) -->
+  <!-- FITUR 9: PREVIEW RAPOR PER DOSEN (ADMIN) -->
+  <div class="card" id="card-preview-rapor-admin">
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:12px">
+      <div class="sec" style="margin-bottom:0">📊 Preview Rapor Dosen</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
+        <select id="admin-rapor-dosen" onchange="renderAdminRapor()" style="font-size:12px;padding:4px 8px;border-radius:6px;width:auto">
+          <option value="">— Pilih dosen —</option>
+        </select>
+        <select id="admin-rapor-semester" onchange="renderAdminRapor()" style="font-size:12px;padding:4px 8px;border-radius:6px;width:auto">
+          <option value="all">Semua Periode</option>
+        </select>
+        <button class="btn btn-sm btn-blue" onclick="exportAdminRaporPDF()" style="font-size:11px">📄 Export PDF</button>
+      </div>
+    </div>
+    <div id="admin-rapor-konten">
+      <div style="text-align:center;padding:2rem;color:#aaa;font-size:13px">Pilih dosen untuk melihat rapor presensinya.</div>
+    </div>
+  </div>
   <div class="card" id="card-riwayat-maju">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
       <div class="sec" style="margin-bottom:0">⏩ Riwayat Jadwal Maju</div>
@@ -665,7 +712,7 @@ tr:last-child td{border-bottom:none}
 
 <div class="app-footer">
   Powered by <b>Skuro Production</b><br>
-  <span class="version-tag">v3.0</span>
+  <span class="version-tag">LYTARA v4.5</span>
 </div>
 
 </div>
@@ -2756,212 +2803,357 @@ function cekNotifMaju() {
 }
 
 // =====================================================
+// RAPOR — Semester helper
+// =====================================================
+function getSemesterOptions(presensiBulan) {
+  // Bangun daftar semester dari data bulan presensi (Ganjil: Agu-Jan, Genap: Feb-Jul)
+  var semSet = {};
+  var now = new Date();
+  var thisYear = now.getFullYear();
+  // Tambah 4 semester terakhir sebagai pilihan
+  for(var y = thisYear - 1; y <= thisYear + 1; y++) {
+    semSet['Ganjil '+y+'/'+(y+1)] = {label:'Semester Ganjil '+y+'/'+(y+1), startM:8, startY:y, endM:1, endY:y+1};
+    semSet['Genap '+y+'/'+(y+1)] = {label:'Semester Genap '+y+'/'+(y+1), startM:2, startY:y, endM:7, endY:y};
+  }
+  return Object.values(semSet);
+}
+
+function filterBySemester(dataArr, semVal, tglField) {
+  if(!semVal || semVal==='all') return dataArr;
+  // semVal format: "Ganjil 2025/2026" or "Genap 2025/2026"
+  var parts = semVal.split(' ');
+  var jenis = parts[0]; // Ganjil / Genap
+  var tahun = parts[1] ? parts[1].split('/') : [];
+  var y1 = parseInt(tahun[0])||0, y2 = parseInt(tahun[1])||0;
+  return dataArr.filter(function(item){
+    var tgl = item[tglField]||item.tanggal||item.tgl||item.ganti||'';
+    var d = parseTanggal(tgl) ? new Date(parseTanggal(tgl)) : null;
+    if(!d) return false;
+    var m = d.getMonth()+1, y = d.getFullYear();
+    if(jenis==='Ganjil') return (y===y1 && m>=8) || (y===y2 && m<=1);
+    if(jenis==='Genap') return y===y2 && m>=2 && m<=7;
+    return true;
+  });
+}
+
+function buildSemesterSelect(selId, currentVal) {
+  var sel = document.getElementById(selId);
+  if(!sel) return;
+  var opts = getSemesterOptions();
+  var cur = sel.value || currentVal || 'all';
+  sel.innerHTML = '<option value="all">Semua Periode</option>';
+  opts.reverse().forEach(function(s){
+    var o = document.createElement('option');
+    var key = s.label.replace('Semester ','');
+    o.value = key; o.textContent = s.label;
+    if(key === cur) o.selected = true;
+    sel.appendChild(o);
+  });
+}
+
+// =====================================================
 // RAPOR SAYA — Evaluasi Mandiri Dosen
 // =====================================================
-function renderRapor() {
-  if(!currentUser || isAdmin) return;
+function renderRapor(dosenOverride) {
+  var targetDosen = dosenOverride || currentUser;
+  if(!targetDosen) return;
 
-  var myP = P.filter(function(p){ return p.dosenId === currentUser.id; });
-  var myG = G.filter(function(g){ return g.dosenId === currentUser.id; });
-  var myM = M.filter(function(m){ return m.dosenId === currentUser.id; });
-  var myJ = J.filter(function(j){ return j.dosenId === currentUser.id; });
+  var isAdminView = !!dosenOverride;
+  var semSelId = isAdminView ? 'admin-rapor-semester' : 'rapor-filter-semester';
+  var semVal = (document.getElementById(semSelId)||{}).value || 'all';
 
-  // Avatar & nama
-  var parts = currentUser.nama.split(' ').filter(Boolean);
+  // Isi dropdown semester pertama kali
+  if(!isAdminView) buildSemesterSelect('rapor-filter-semester', semVal);
+
+  var myP = filterBySemester(P.filter(function(p){ return p.dosenId===targetDosen.id; }), semVal, 'tanggal');
+  var myG = filterBySemester(G.filter(function(g){ return g.dosenId===targetDosen.id; }), semVal, 'ganti');
+  var myM = filterBySemester(M.filter(function(m){ return m.dosenId===targetDosen.id; }), semVal, 'tglRaw');
+
+  // Label semester
+  var semLabel = semVal==='all' ? 'Semua Periode' : semVal;
+
+  // Prefix IDs untuk admin view (pakai elemen berbeda agar tidak konflik)
+  var pre = isAdminView ? 'ar-' : 'rapor-';
+  var container = isAdminView ? document.getElementById('admin-rapor-konten') : null;
+
+  // Build HTML rapor
+  var rHtml = buildRaporHTML(targetDosen, myP, myG, myM, semLabel, pre, isAdminView);
+
+  if(isAdminView) {
+    container.innerHTML = rHtml;
+  } else {
+    // Isi elemen-elemen individual
+    fillRaporElements(targetDosen, myP, myG, myM, semLabel);
+  }
+}
+
+function fillRaporElements(targetDosen, myP, myG, myM, semLabel) {
+  var parts = targetDosen.nama.split(' ').filter(Boolean);
   var init = parts.length===1 ? parts[0].substring(0,2).toUpperCase() : (parts[0][0]+(parts[parts.length-1][0])).toUpperCase();
   document.getElementById('rapor-avatar').textContent = init;
-  document.getElementById('rapor-nama').textContent = currentUser.nama;
+  document.getElementById('rapor-nama').textContent = targetDosen.nama;
+  document.getElementById('rapor-semester-label').textContent = semLabel==='Semua Periode' ? '' : '📅 '+semLabel;
 
-  // Periode data
+  var total = myP.length;
+  var tepat  = myP.filter(function(p){ return p.color==='green'; }).length;
+  var lambat = myP.filter(function(p){ return p.color==='yellow'; }).length;
+  var sangat = myP.filter(function(p){ return p.color==='red'; }).length;
+  var pctTepat = total > 0 ? Math.round((tepat/total)*100) : 0;
+
   if(myP.length > 0) {
     var dates = myP.map(function(p){ return parseTanggal(p.tanggal); }).filter(Boolean).sort(function(a,b){return a-b;});
     var tFirst = new Date(dates[0]).toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric'});
     var tLast  = new Date(dates[dates.length-1]).toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric'});
     document.getElementById('rapor-periode').textContent = 'Periode: '+tFirst+' — '+tLast;
   } else {
-    document.getElementById('rapor-periode').textContent = 'Belum ada data presensi';
+    document.getElementById('rapor-periode').textContent = 'Belum ada data presensi pada periode ini';
   }
-
-  // Hitung statistik dasar
-  var total  = myP.length;
-  var tepat  = myP.filter(function(p){ return p.color==='green'; }).length;
-  var lambat = myP.filter(function(p){ return p.color==='yellow'; }).length;
-  var sangat = myP.filter(function(p){ return p.color==='red'; }).length;
-  var pctTepat = total > 0 ? Math.round((tepat/total)*100) : 0;
 
   document.getElementById('rapor-total').textContent = total+'x';
   document.getElementById('rapor-tepat').textContent = tepat+'x';
   document.getElementById('rapor-terlambat').textContent = lambat+'x';
   document.getElementById('rapor-sangat').textContent = sangat+'x';
 
-  // Grade
-  var grade, gradeLabel, gradeColor, gradeBarColor, pesanUtama, pesanSub;
-  if(total === 0) {
-    grade='—'; gradeLabel='Belum ada data'; gradeColor='#888'; gradeBarColor='#ccc';
-    pesanUtama='Belum ada rekam presensi.';
-    pesanSub='Mulai rekam presensi Anda agar rapor dapat ditampilkan.';
-  } else if(pctTepat >= 90) {
-    grade='A'; gradeLabel='Sangat Disiplin'; gradeColor='#27500a'; gradeBarColor='#639922';
-    pesanUtama='🏆 Luar biasa! Tingkat kedisiplinan Anda sangat tinggi.';
-    pesanSub='Pertahankan konsistensi ini. Anda menjadi teladan bagi rekan dosen lainnya.';
-  } else if(pctTepat >= 80) {
-    grade='B'; gradeLabel='Disiplin'; gradeColor='#185fa5'; gradeBarColor='#3b82f6';
-    pesanUtama='👍 Bagus! Kehadiran Anda cukup baik dan konsisten.';
-    pesanSub='Masih ada ruang untuk mencapai grade A. Perhatikan jadwal agar lebih tepat waktu.';
-  } else if(pctTepat >= 65) {
-    grade='C'; gradeLabel='Cukup'; gradeColor='#633806'; gradeBarColor='#BA7517';
-    pesanUtama='⚠️ Perlu ditingkatkan. Cukup banyak sesi yang tidak tepat waktu.';
-    pesanSub='Perhatikan jadwal mengajar Anda. Keterlambatan berulang akan tercatat dalam evaluasi WK I.';
-  } else if(pctTepat >= 50) {
-    grade='D'; gradeLabel='Kurang Disiplin'; gradeColor='#92400e'; gradeBarColor='#f59e0b';
-    pesanUtama='🚨 Perhatian! Tingkat ketepatan waktu Anda di bawah standar.';
-    pesanSub='Mohon segera perbaiki kebiasaan kehadiran. Data ini akan menjadi bahan evaluasi di HRD.';
-  } else {
-    grade='E'; gradeLabel='Sangat Kurang'; gradeColor='#a32d2d'; gradeBarColor='#E24B4A';
-    pesanUtama='🚨 Kritis! Mayoritas sesi mengajar tidak tepat waktu.';
-    pesanSub='Segera lakukan perbaikan dan konsultasikan dengan Bidang Akademik / WK I sebelum evaluasi akhir.';
-  }
-
-  document.getElementById('rapor-grade-huruf').textContent = grade;
-  document.getElementById('rapor-grade-huruf').style.color = gradeBarColor;
-  document.getElementById('rapor-grade-label').textContent = gradeLabel;
-  document.getElementById('rapor-grade-label').style.color = '#fff';
+  var gradeData = calcGrade(pctTepat, total, lambat, sangat, myP);
+  document.getElementById('rapor-grade-huruf').textContent = gradeData.grade;
+  document.getElementById('rapor-grade-huruf').style.color = gradeData.barColor;
+  document.getElementById('rapor-grade-label').textContent = gradeData.label;
   document.getElementById('rapor-grade-bar').style.width = pctTepat+'%';
-  document.getElementById('rapor-grade-bar').style.background = gradeBarColor;
+  document.getElementById('rapor-grade-bar').style.background = gradeData.barColor;
   document.getElementById('rapor-grade-pct').textContent = pctTepat+'% tepat waktu ('+tepat+' dari '+total+' sesi)';
 
-  // Pesan evaluasi
   var pesanBg = pctTepat>=80?'#eaf3de':pctTepat>=65?'#faeeda':'#fcebeb';
   var pesanBorder = pctTepat>=80?'#97c459':pctTepat>=65?'#fac775':'#f09595';
   var pesanTx = pctTepat>=80?'#27500a':pctTepat>=65?'#633806':'#791f1f';
-  document.getElementById('rapor-pesan').innerHTML =
-    '<div style="background:'+pesanBg+';border-left:4px solid '+pesanBorder+';border-radius:0 10px 10px 0;padding:12px 14px">'
-    +'<div style="font-size:14px;font-weight:700;color:'+pesanTx+';margin-bottom:4px">'+pesanUtama+'</div>'
-    +'<div style="font-size:12px;color:'+pesanTx+';line-height:1.6;opacity:.85">'+pesanSub+'</div>'
-    +(total>0 && lambat+sangat > 0
-      ? '<div style="margin-top:8px;font-size:11px;color:'+pesanTx+';opacity:.75">📌 Rata-rata keterlambatan: <b>'
-        +Math.round(myP.filter(function(p){return p.color==='yellow'||p.color==='red';}).reduce(function(s,p){return s+(Number(p.diff)||0);},0)/(lambat+sangat||1))
-        +' menit</b> dari '+( lambat+sangat )+'x sesi terlambat.</div>'
-      : '')
-    +'</div>';
+  document.getElementById('rapor-pesan').innerHTML = buildPesanHTML(gradeData, pctTepat, lambat, sangat, myP, pesanBg, pesanBorder, pesanTx);
+  document.getElementById('rapor-mode').innerHTML = buildModeHTML(myP, total);
+  document.getElementById('rapor-selesai').innerHTML = buildSelesaiHTML(myP, total);
+  document.getElementById('rapor-tren').innerHTML = buildTrenHTML(myP);
+  document.getElementById('rapor-mk').innerHTML = buildMkHTML(myP);
+  document.getElementById('rapor-pengajuan').innerHTML = buildPengajuanHTML(myG, myM);
+}
 
-  // Mode perkuliahan
-  var ml = myP.filter(function(p){ return !p.modeKuliah||p.modeKuliah.indexOf('Luring')>-1; }).length;
-  var ms = myP.filter(function(p){ return p.modeKuliah&&p.modeKuliah.indexOf('Sinkronus')>-1&&p.modeKuliah.indexOf('Asinkronus')===-1; }).length;
-  var ma = myP.filter(function(p){ return p.modeKuliah&&p.modeKuliah.indexOf('Asinkronus')>-1; }).length;
-  var pA = total?Math.round(ma/total*100):0;
-  document.getElementById('rapor-mode').innerHTML = total===0 ? '<p class="empty">Belum ada data.</p>' :
-    [['🏫','Luring',ml,'#639922','#eaf3de'],['💻','Sinkronus',ms,'#185fa5','#e6f1fb'],['📝','Asinkronus',ma,'#BA7517','#faeeda']].map(function(x){
-      var pct = total?Math.round(x[2]/total*100):0;
-      return '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">'
-        +'<span style="font-size:14px">'+x[0]+'</span>'
-        +'<div style="flex:1;min-width:0">'
-          +'<div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:3px"><span style="color:#555;font-weight:500">'+x[1]+'</span><span style="font-weight:700;color:'+x[3]+'">'+x[2]+'x ('+pct+'%)</span></div>'
-          +'<div style="background:#f0f0ee;border-radius:20px;height:6px"><div style="width:'+pct+'%;height:6px;border-radius:20px;background:'+x[3]+'"></div></div>'
-        +'</div>'
-        +'</div>';
-    }).join('')
-    +(pA>=50?'<div style="margin-top:6px;padding:6px 10px;background:#faeeda;border-radius:7px;font-size:11px;color:#633806;font-weight:600">⚠️ Proporsi Asinkronus terlalu tinggi ('+pA+'%). Perlu perhatian.</div>':'');
+function buildRaporHTML(targetDosen, myP, myG, myM, semLabel, pre, isAdminView) {
+  var parts = targetDosen.nama.split(' ').filter(Boolean);
+  var init = parts.length===1 ? parts[0].substring(0,2).toUpperCase() : (parts[0][0]+(parts[parts.length-1][0])).toUpperCase();
+  var AVATAR_COLORS=['#185fa5','#639922','#7c3aed','#c2410c','#0f766e','#b45309','#be123c'];
+  var ac = AVATAR_COLORS[init.charCodeAt(0)%AVATAR_COLORS.length];
 
-  // Rekap selesai
-  var sd = myP.filter(function(p){ return p.waktuSelesai&&p.waktuSelesai!==''; });
-  var sh = sd.filter(function(p){ return p.colorSelesai==='blue'; }).length;
-  var sm = sd.filter(function(p){ return p.colorSelesai==='red'; }).length;
-  var sn = total - sd.length;
-  document.getElementById('rapor-selesai').innerHTML = total===0 ? '<p class="empty">Belum ada data.</p>' :
-    [['✅','Tepat waktu selesai',sh,'#185fa5'],['⚠️','Pulang awal',sm,'#E24B4A'],['⏳','Belum direkam',sn,'#aaa']].map(function(x){
-      var pct = total?Math.round(x[2]/total*100):0;
-      return '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">'
-        +'<span style="font-size:13px">'+x[0]+'</span>'
-        +'<div style="flex:1;min-width:0">'
-          +'<div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:3px"><span style="color:#555;font-weight:500">'+x[1]+'</span><span style="font-weight:700;color:'+x[3]+'">'+x[2]+'x</span></div>'
-          +'<div style="background:#f0f0ee;border-radius:20px;height:6px"><div style="width:'+pct+'%;height:6px;border-radius:20px;background:'+x[3]+'"></div></div>'
-        +'</div>'
-        +'</div>';
-    }).join('');
+  var total = myP.length;
+  var tepat  = myP.filter(function(p){ return p.color==='green'; }).length;
+  var lambat = myP.filter(function(p){ return p.color==='yellow'; }).length;
+  var sangat = myP.filter(function(p){ return p.color==='red'; }).length;
+  var pctTepat = total > 0 ? Math.round((tepat/total)*100) : 0;
+  var gradeData = calcGrade(pctTepat, total, lambat, sangat, myP);
 
-  // Tren bulanan
-  var BULAN = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
-  var trenData = BULAN.map(function(_, i){
-    var bln = myP.filter(function(p){ return Number(p.bulan)===(i+1); });
-    if(!bln.length) return {lbl:BULAN[i], pct:null, n:0};
-    var t2 = bln.filter(function(p){ return p.color==='green'; }).length;
-    return {lbl:BULAN[i], pct:Math.round(t2/bln.length*100), n:bln.length};
+  var periodeStr = '';
+  if(myP.length > 0) {
+    var dates = myP.map(function(p){ return parseTanggal(p.tanggal); }).filter(Boolean).sort(function(a,b){return a-b;});
+    periodeStr = new Date(dates[0]).toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric'})+' — '+new Date(dates[dates.length-1]).toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric'});
+  }
+
+  var pesanBg = pctTepat>=80?'#eaf3de':pctTepat>=65?'#faeeda':'#fcebeb';
+  var pesanBorder = pctTepat>=80?'#97c459':pctTepat>=65?'#fac775':'#f09595';
+  var pesanTx = pctTepat>=80?'#27500a':pctTepat>=65?'#633806':'#791f1f';
+
+  return ''
+    // Header
+    +'<div style="background:linear-gradient(135deg,#1a1a1a,#2d2d2d);border-radius:12px;padding:16px;color:#fff;margin-bottom:12px">'
+      +'<div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">'
+        +'<div style="width:44px;height:44px;border-radius:50%;background:'+ac+';color:#fff;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:800;flex-shrink:0">'+init+'</div>'
+        +'<div><div style="font-size:15px;font-weight:700">'+targetDosen.nama+'</div>'
+        +'<div style="font-size:10px;color:#aaa">LYTARA v4.5 · Evaluasi Presensi'+( semLabel!=='Semua Periode'?' · '+semLabel:'' )+'</div>'
+        +(periodeStr?'<div style="font-size:10px;color:#888">'+periodeStr+'</div>':'')+
+        '</div></div>'
+      +'<div style="display:flex;align-items:center;gap:14px">'
+        +'<div style="text-align:center"><div style="font-size:40px;font-weight:900;color:'+gradeData.barColor+'">'+gradeData.grade+'</div><div style="font-size:9px;color:#aaa">GRADE</div></div>'
+        +'<div style="flex:1"><div style="font-size:13px;font-weight:600;margin-bottom:5px;color:#fff">'+gradeData.label+'</div>'
+        +'<div style="background:rgba(255,255,255,.15);border-radius:20px;height:8px;overflow:hidden"><div style="width:'+pctTepat+'%;height:8px;border-radius:20px;background:'+gradeData.barColor+'"></div></div>'
+        +'<div style="font-size:11px;color:#aaa;margin-top:3px">'+pctTepat+'% tepat waktu · '+tepat+'/'+total+' sesi</div></div>'
+      +'</div>'
+    +'</div>'
+    // Stat boxes
+    +'<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:10px">'
+      +[['Total',total+'x','#1a1a1a','#fff'],['Tepat',tepat+'x','#27500a','#eaf3de'],['Terlambat',lambat+'x','#633806','#faeeda'],['Sgt Terlambat',sangat+'x','#a32d2d','#fcebeb']].map(function(x){
+        return '<div style="background:'+x[3]+';border-radius:10px;padding:10px;text-align:center"><div style="font-size:18px;font-weight:700;color:'+x[2]+'">'+x[1]+'</div><div style="font-size:9px;color:'+x[2]+';opacity:.7;margin-top:2px">'+x[0]+'</div></div>';
+      }).join('')
+    +'</div>'
+    // Pesan
+    +'<div style="background:'+pesanBg+';border-left:4px solid '+pesanBorder+';border-radius:0 10px 10px 0;padding:10px 12px;margin-bottom:10px">'
+      +'<div style="font-size:13px;font-weight:700;color:'+pesanTx+'">'+gradeData.pesanUtama+'</div>'
+      +'<div style="font-size:11px;color:'+pesanTx+';opacity:.85;margin-top:3px">'+gradeData.pesanSub+'</div>'
+    +'</div>'
+    // Mode + Tren
+    +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">'
+      +'<div style="background:#fff;border:1px solid #e5e5e3;border-radius:10px;padding:12px"><div style="font-size:11px;font-weight:600;color:#888;text-transform:uppercase;margin-bottom:8px">Mode Kuliah</div>'+buildModeHTML(myP,total)+'</div>'
+      +'<div style="background:#fff;border:1px solid #e5e5e3;border-radius:10px;padding:12px"><div style="font-size:11px;font-weight:600;color:#888;text-transform:uppercase;margin-bottom:8px">Tren Bulanan</div><div style="display:flex;align-items:flex-end;gap:3px;height:60px">'+buildTrenHTML(myP)+'</div></div>'
+    +'</div>'
+    // Per MK
+    +'<div style="background:#fff;border:1px solid #e5e5e3;border-radius:10px;padding:12px;margin-bottom:10px">'
+      +'<div style="font-size:11px;font-weight:600;color:#888;text-transform:uppercase;margin-bottom:8px">📚 Per Mata Kuliah</div>'
+      +buildMkHTML(myP)
+    +'</div>'
+    // Pengajuan
+    +'<div style="background:#fff;border:1px solid #e5e5e3;border-radius:10px;padding:12px;margin-bottom:8px">'
+      +'<div style="font-size:11px;font-weight:600;color:#888;text-transform:uppercase;margin-bottom:8px">📋 Pengajuan Jadwal</div>'
+      +buildPengajuanHTML(myG, myM)
+    +'</div>'
+    +'<div style="font-size:10px;color:#aaa;text-align:center;padding:6px">LYTARA v4.5 · Skuro Production · Dicetak: '+new Date().toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric',hour:'2-digit',minute:'2-digit'})+'</div>';
+}
+
+function calcGrade(pctTepat, total, lambat, sangat, myP) {
+  var grade, label, barColor, pesanUtama, pesanSub;
+  if(total===0){ return {grade:'—',label:'Belum ada data',barColor:'#ccc',pesanUtama:'Belum ada rekam presensi.',pesanSub:'Mulai rekam presensi agar rapor dapat ditampilkan.'}; }
+  if(pctTepat>=90){ grade='A';label='Sangat Disiplin';barColor='#639922';pesanUtama='🏆 Luar biasa! Tingkat kedisiplinan Anda sangat tinggi.';pesanSub='Pertahankan konsistensi ini. Anda menjadi teladan bagi rekan dosen lainnya.'; }
+  else if(pctTepat>=80){ grade='B';label='Disiplin';barColor='#3b82f6';pesanUtama='👍 Bagus! Kehadiran Anda cukup baik dan konsisten.';pesanSub='Masih ada ruang untuk mencapai grade A. Perhatikan jadwal agar lebih tepat waktu.'; }
+  else if(pctTepat>=65){ grade='C';label='Cukup';barColor='#BA7517';pesanUtama='⚠️ Perlu ditingkatkan. Cukup banyak sesi yang tidak tepat waktu.';pesanSub='Perhatikan jadwal mengajar Anda. Keterlambatan berulang akan tercatat dalam evaluasi WK I.'; }
+  else if(pctTepat>=50){ grade='D';label='Kurang Disiplin';barColor='#f59e0b';pesanUtama='🚨 Perhatian! Tingkat ketepatan waktu Anda di bawah standar.';pesanSub='Mohon segera perbaiki kebiasaan kehadiran. Data ini akan menjadi bahan evaluasi di HRD.'; }
+  else { grade='E';label='Sangat Kurang';barColor='#E24B4A';pesanUtama='🚨 Kritis! Mayoritas sesi mengajar tidak tepat waktu.';pesanSub='Segera lakukan perbaikan dan konsultasikan dengan Bidang Akademik / WK I sebelum evaluasi akhir.'; }
+  return {grade:grade,label:label,barColor:barColor,pesanUtama:pesanUtama,pesanSub:pesanSub};
+}
+
+function buildModeHTML(myP, total) {
+  if(!total) return '<p class="empty" style="font-size:12px">Belum ada data.</p>';
+  var ml=myP.filter(function(p){return !p.modeKuliah||p.modeKuliah.indexOf('Luring')>-1;}).length;
+  var ms=myP.filter(function(p){return p.modeKuliah&&p.modeKuliah.indexOf('Sinkronus')>-1&&p.modeKuliah.indexOf('Asinkronus')===-1;}).length;
+  var ma=myP.filter(function(p){return p.modeKuliah&&p.modeKuliah.indexOf('Asinkronus')>-1;}).length;
+  return [['🏫','Luring',ml,'#639922'],['💻','Sinkronus',ms,'#185fa5'],['📝','Asinkronus',ma,'#BA7517']].map(function(x){
+    var pct=total?Math.round(x[2]/total*100):0;
+    return '<div style="display:flex;align-items:center;gap:6px;margin-bottom:6px"><span>'+x[0]+'</span><div style="flex:1;min-width:0"><div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:2px"><span style="color:#555">'+x[1]+'</span><span style="font-weight:700;color:'+x[3]+'">'+x[2]+'x ('+pct+'%)</span></div><div style="background:#f0f0ee;border-radius:10px;height:5px"><div style="width:'+pct+'%;height:5px;border-radius:10px;background:'+x[3]+'"></div></div></div></div>';
+  }).join('') + (myP.filter(function(p){return p.modeKuliah&&p.modeKuliah.indexOf('Asinkronus')>-1;}).length/total>=.5?'<div style="padding:5px 8px;background:#faeeda;border-radius:7px;font-size:10px;color:#633806;font-weight:600">⚠️ Asinkronus ≥50% — perlu perhatian</div>':'');
+}
+
+function buildSelesaiHTML(myP, total) {
+  if(!total) return '<p class="empty" style="font-size:12px">Belum ada data.</p>';
+  var sd=myP.filter(function(p){return p.waktuSelesai&&p.waktuSelesai!=='';});
+  var sh=sd.filter(function(p){return p.colorSelesai==='blue';}).length;
+  var sm=sd.filter(function(p){return p.colorSelesai==='red';}).length;
+  var sn=total-sd.length;
+  return [['✅','Tepat selesai',sh,'#185fa5'],['⚠️','Pulang awal',sm,'#E24B4A'],['⏳','Belum direkam',sn,'#aaa']].map(function(x){
+    var pct=total?Math.round(x[2]/total*100):0;
+    return '<div style="display:flex;align-items:center;gap:6px;margin-bottom:6px"><span>'+x[0]+'</span><div style="flex:1;min-width:0"><div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:2px"><span style="color:#555">'+x[1]+'</span><span style="font-weight:700;color:'+x[3]+'">'+x[2]+'x</span></div><div style="background:#f0f0ee;border-radius:10px;height:5px"><div style="width:'+pct+'%;height:5px;border-radius:10px;background:'+x[3]+'"></div></div></div></div>';
+  }).join('');
+}
+
+function buildTrenHTML(myP) {
+  var BULAN=['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
+  var trenData=BULAN.map(function(_,i){
+    var bln=myP.filter(function(p){return Number(p.bulan)===(i+1);});
+    if(!bln.length) return {lbl:BULAN[i],pct:null,n:0};
+    return {lbl:BULAN[i],pct:Math.round(bln.filter(function(p){return p.color==='green';}).length/bln.length*100),n:bln.length};
   });
-  var hasAnyTren = trenData.some(function(t){ return t.n>0; });
-  document.getElementById('rapor-tren').innerHTML = !hasAnyTren ? '<p class="empty" style="font-size:12px">Belum cukup data.</p>' :
-    trenData.map(function(t){
-      if(t.n===0) return '<div style="display:flex;flex-direction:column;align-items:center;flex:1;gap:2px"><div style="flex:1;background:#f0f0ee;border-radius:4px 4px 0 0;width:100%;min-height:2px"></div><div style="font-size:9px;color:#ccc">'+t.lbl+'</div></div>';
-      var barH = Math.max(8, Math.round(t.pct * 0.7));
-      var bc = t.pct>=80?'#639922':t.pct>=60?'#BA7517':'#E24B4A';
-      return '<div style="display:flex;flex-direction:column;align-items:center;flex:1;gap:2px;cursor:default" title="'+t.lbl+': '+t.pct+'% ('+t.n+'x sesi)">'
-        +'<div style="font-size:9px;font-weight:700;color:'+bc+'">'+t.pct+'%</div>'
-        +'<div style="height:'+barH+'px;background:'+bc+';border-radius:4px 4px 0 0;width:100%"></div>'
-        +'<div style="font-size:9px;color:#888">'+t.lbl+'</div>'
-        +'</div>';
-    }).join('');
+  if(!trenData.some(function(t){return t.n>0;})) return '<p class="empty" style="font-size:11px;line-height:60px">Belum cukup data.</p>';
+  return trenData.map(function(t){
+    if(!t.n) return '<div style="display:flex;flex-direction:column;align-items:center;flex:1;gap:1px"><div style="flex:1;background:#f0f0ee;border-radius:3px 3px 0 0;width:100%"></div><div style="font-size:8px;color:#ccc">'+t.lbl+'</div></div>';
+    var bH=Math.max(6,Math.round(t.pct*.55));
+    var bc=t.pct>=80?'#639922':t.pct>=60?'#BA7517':'#E24B4A';
+    return '<div style="display:flex;flex-direction:column;align-items:center;flex:1;gap:1px" title="'+t.lbl+': '+t.pct+'% ('+t.n+'x)"><div style="font-size:8px;font-weight:700;color:'+bc+'">'+t.pct+'</div><div style="height:'+bH+'px;background:'+bc+';border-radius:3px 3px 0 0;width:100%"></div><div style="font-size:8px;color:#888">'+t.lbl+'</div></div>';
+  }).join('');
+}
 
-  // Rekap per MK
-  var mkList = {};
+function buildMkHTML(myP) {
+  var mkList={};
   myP.forEach(function(p){
-    if(!mkList[p.mk]) mkList[p.mk]={mk:p.mk,total:0,tepat:0,lambat:0,sangat:0,modeCount:{}};
-    mkList[p.mk].total++;
-    if(p.color==='green') mkList[p.mk].tepat++;
-    else if(p.color==='yellow') mkList[p.mk].lambat++;
-    else mkList[p.mk].sangat++;
-    var md = p.modeKuliah||'Luring';
-    mkList[p.mk].modeCount[md] = (mkList[p.mk].modeCount[md]||0)+1;
+    if(!mkList[p.mk]) mkList[p.mk]={mk:p.mk,total:0,tepat:0,lambat:0,sangat:0};
+    mkList[p.mk].total++; if(p.color==='green') mkList[p.mk].tepat++; else if(p.color==='yellow') mkList[p.mk].lambat++; else mkList[p.mk].sangat++;
   });
-  var mkArr = Object.values(mkList).sort(function(a,b){ return b.total-a.total; });
-  document.getElementById('rapor-mk').innerHTML = mkArr.length===0 ? '<p class="empty">Belum ada data.</p>' :
-    mkArr.map(function(mk){
-      var pct2 = Math.round(mk.tepat/mk.total*100);
-      var bc2 = pct2>=80?'#639922':pct2>=60?'#BA7517':'#E24B4A';
-      var modeStr = Object.keys(mk.modeCount).map(function(k){ return k.replace('Daring ','').replace('Luring','Luring')+' ('+mk.modeCount[k]+'x)'; }).join(', ');
-      return '<div style="padding:10px 0;border-bottom:1px solid #f0f0ee">'
-        +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px">'
-          +'<div style="font-size:13px;font-weight:600;color:#1a1a1a;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+mk.mk+'</div>'
-          +'<div style="font-size:13px;font-weight:800;color:'+bc2+';margin-left:8px;flex-shrink:0">'+pct2+'%</div>'
-        +'</div>'
-        +'<div style="background:#f0f0ee;border-radius:20px;height:7px;margin-bottom:5px;overflow:hidden">'
-          +'<div style="display:flex;height:7px;border-radius:20px;overflow:hidden">'
-            +(mk.tepat?'<div style="flex:'+mk.tepat+';background:#639922"></div>':'')
-            +(mk.lambat?'<div style="flex:'+mk.lambat+';background:#BA7517"></div>':'')
-            +(mk.sangat?'<div style="flex:'+mk.sangat+';background:#E24B4A"></div>':'')
-          +'</div>'
-        +'</div>'
-        +'<div style="font-size:10px;color:#888">'+mk.total+'x sesi · ✓ '+mk.tepat+'x tepat · ⚠ '+mk.lambat+'x terlambat · ✗ '+mk.sangat+'x sangat terlambat</div>'
-        +'<div style="font-size:10px;color:#aaa;margin-top:2px">Mode: '+modeStr+'</div>'
-        +'</div>';
-    }).join('');
+  var arr=Object.values(mkList).sort(function(a,b){return b.total-a.total;});
+  if(!arr.length) return '<p class="empty" style="font-size:12px">Belum ada data.</p>';
+  return arr.map(function(mk){
+    var pct=Math.round(mk.tepat/mk.total*100);
+    var bc=pct>=80?'#639922':pct>=60?'#BA7517':'#E24B4A';
+    return '<div style="padding:8px 0;border-bottom:1px solid #f0f0ee"><div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:12px;font-weight:600;color:#1a1a1a;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:80%">'+mk.mk+'</span><span style="font-size:12px;font-weight:800;color:'+bc+';margin-left:6px">'+pct+'%</span></div><div style="display:flex;height:6px;border-radius:10px;overflow:hidden;background:#f0f0ee"><div style="flex:'+mk.tepat+';background:#639922"></div><div style="flex:'+mk.lambat+';background:#BA7517"></div><div style="flex:'+mk.sangat+';background:#E24B4A"></div></div><div style="font-size:10px;color:#aaa;margin-top:3px">'+mk.total+'x sesi · ✓'+mk.tepat+' ⚠'+mk.lambat+' ✗'+mk.sangat+'</div></div>';
+  }).join('');
+}
 
-  // Riwayat pengajuan (ganti + maju)
-  var allPengajuan = [];
-  myG.forEach(function(g){ allPengajuan.push({type:'Pengganti',tgl:g.ganti||g.asli,mk:g.mk,status:g.statusAcc,info:g.asli+' → '+g.ganti+' · '+g.jam}); });
-  myM.forEach(function(m){ allPengajuan.push({type:'Maju',tgl:m.tglRaw||'',mk:m.mk,status:m.statusAcc,info:m.tgl+' · '+m.jam}); });
-  allPengajuan.sort(function(a,b){ return (b.tgl||'').localeCompare(a.tgl||''); });
+function buildPengajuanHTML(myG, myM) {
+  var all=[];
+  myG.forEach(function(g){all.push({type:'Pengganti',mk:g.mk,status:g.statusAcc,info:g.asli+' → '+g.ganti+' · '+g.jam});});
+  myM.forEach(function(m){all.push({type:'Maju',mk:m.mk,status:m.statusAcc,info:m.tgl+' · '+m.jam});});
+  if(!all.length) return '<p class="empty" style="font-size:12px">Belum ada pengajuan.</p>';
+  return '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">'+all.map(function(ap){
+    var isG=ap.type==='Pengganti';
+    var tBg=isG?'#e6f1fb':'#fef3c7'; var tTx=isG?'#185fa5':'#92400e';
+    var sBg=ap.status==='Disetujui'?'#eaf3de':ap.status==='Ditolak'?'#fcebeb':'#f5f5f3';
+    var sTx=ap.status==='Disetujui'?'#27500a':ap.status==='Ditolak'?'#a32d2d':'#888';
+    var sIcon=ap.status==='Disetujui'?'✅':ap.status==='Ditolak'?'❌':'⏳';
+    return '<div style="background:#f8f8f7;border-radius:8px;padding:8px;min-width:0"><div style="display:flex;gap:4px;margin-bottom:4px;flex-wrap:wrap"><span style="font-size:10px;font-weight:600;padding:1px 6px;border-radius:20px;background:'+tBg+';color:'+tTx+'">'+(isG?'🔄':'⏩')+' '+ap.type+'</span><span style="font-size:10px;font-weight:600;padding:1px 6px;border-radius:20px;background:'+sBg+';color:'+sTx+'">'+sIcon+' '+ap.status+'</span></div><div style="font-size:11px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+ap.mk+'</div><div style="font-size:10px;color:#888;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+ap.info+'</div></div>';
+  }).join('')+'</div>';
+}
 
-  document.getElementById('rapor-pengajuan').innerHTML = allPengajuan.length===0
-    ? '<p class="empty">Belum ada pengajuan jadwal pengganti maupun jadwal maju.</p>'
-    : '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">'
-      + allPengajuan.map(function(ap){
-          var isGanti = ap.type==='Pengganti';
-          var typeBg = isGanti?'#e6f1fb':'#fef3c7';
-          var typeTx = isGanti?'#185fa5':'#92400e';
-          var typeLbl = isGanti?'🔄 Pengganti':'⏩ Maju';
-          var stBg = ap.status==='Disetujui'?'#eaf3de':ap.status==='Ditolak'?'#fcebeb':'#f5f5f3';
-          var stTx = ap.status==='Disetujui'?'#27500a':ap.status==='Ditolak'?'#a32d2d':'#888';
-          var stIcon = ap.status==='Disetujui'?'✅':ap.status==='Ditolak'?'❌':'⏳';
-          return '<div style="background:#fff;border:1px solid #e5e5e3;border-radius:10px;padding:8px 10px;min-width:0">'
-            +'<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:5px;gap:4px">'
-              +'<span style="font-size:10px;font-weight:600;padding:1px 7px;border-radius:20px;background:'+typeBg+';color:'+typeTx+';white-space:nowrap">'+typeLbl+'</span>'
-              +'<span style="font-size:10px;font-weight:600;padding:1px 7px;border-radius:20px;background:'+stBg+';color:'+stTx+';white-space:nowrap">'+stIcon+' '+ap.status+'</span>'
-            +'</div>'
-            +'<div style="font-size:12px;font-weight:600;color:#1a1a1a;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-bottom:2px">'+ap.mk+'</div>'
-            +'<div style="font-size:10px;color:#888;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+ap.info+'</div>'
-            +'</div>';
-        }).join('')
-      +'</div>';
+function buildPesanHTML(gradeData, pctTepat, lambat, sangat, myP, pesanBg, pesanBorder, pesanTx) {
+  return '<div style="background:'+pesanBg+';border-left:4px solid '+pesanBorder+';border-radius:0 10px 10px 0;padding:12px 14px">'
+    +'<div style="font-size:14px;font-weight:700;color:'+pesanTx+';margin-bottom:4px">'+gradeData.pesanUtama+'</div>'
+    +'<div style="font-size:12px;color:'+pesanTx+';line-height:1.6;opacity:.85">'+gradeData.pesanSub+'</div>'
+    +(myP.length>0&&lambat+sangat>0?'<div style="margin-top:8px;font-size:11px;color:'+pesanTx+';opacity:.75">📌 Rata-rata keterlambatan: <b>'+Math.round(myP.filter(function(p){return p.color==='yellow'||p.color==='red';}).reduce(function(s,p){return s+(Number(p.diff)||0);},0)/(lambat+sangat||1))+' menit</b> dari '+(lambat+sangat)+'x sesi terlambat.</div>':'')
+    +'</div>';
+}
+
+// ADMIN: render rapor untuk dosen yang dipilih di dropdown
+function renderAdminRapor() {
+  var dosenId = (document.getElementById('admin-rapor-dosen')||{}).value;
+  var semVal  = (document.getElementById('admin-rapor-semester')||{}).value || 'all';
+
+  // Isi dropdown semester jika belum
+  buildSemesterSelect('admin-rapor-semester', semVal);
+
+  var container = document.getElementById('admin-rapor-konten');
+  if(!container) return;
+  if(!dosenId) {
+    container.innerHTML = '<div style="text-align:center;padding:2rem;color:#aaa;font-size:13px">Pilih dosen untuk melihat rapor presensinya.</div>';
+    return;
+  }
+  var dosen = D.find(function(d){ return d.id===dosenId; });
+  if(!dosen) return;
+  renderRapor(dosen);
+}
+
+// Isi dropdown dosen di admin rapor
+function fillAdminRaporDropdown() {
+  var sel = document.getElementById('admin-rapor-dosen');
+  if(!sel || sel.options.length > 1) return;
+  D.forEach(function(d){
+    var o = document.createElement('option');
+    o.value = d.id; o.textContent = d.nama;
+    sel.appendChild(o);
+  });
+  buildSemesterSelect('admin-rapor-semester', 'all');
+}
+
+// PDF EXPORT — dosen
+function exportRaporPDF() {
+  var dosen = currentUser;
+  if(!dosen) return;
+  var semVal = (document.getElementById('rapor-filter-semester')||{}).value || 'all';
+  var myP = filterBySemester(P.filter(function(p){return p.dosenId===dosen.id;}),semVal,'tanggal');
+  var myG = filterBySemester(G.filter(function(g){return g.dosenId===dosen.id;}),semVal,'ganti');
+  var myM = filterBySemester(M.filter(function(m){return m.dosenId===dosen.id;}),semVal,'tglRaw');
+  var semLabel = semVal==='all'?'Semua Periode':semVal;
+  _openRaporPrintWindow(dosen, myP, myG, myM, semLabel);
+}
+
+// PDF EXPORT — admin
+function exportAdminRaporPDF() {
+  var dosenId = (document.getElementById('admin-rapor-dosen')||{}).value;
+  if(!dosenId){alert('Pilih dosen terlebih dahulu.');return;}
+  var dosen = D.find(function(d){return d.id===dosenId;});
+  if(!dosen) return;
+  var semVal = (document.getElementById('admin-rapor-semester')||{}).value||'all';
+  var myP = filterBySemester(P.filter(function(p){return p.dosenId===dosen.id;}),semVal,'tanggal');
+  var myG = filterBySemester(G.filter(function(g){return g.dosenId===dosen.id;}),semVal,'ganti');
+  var myM = filterBySemester(M.filter(function(m){return m.dosenId===dosen.id;}),semVal,'tglRaw');
+  var semLabel = semVal==='all'?'Semua Periode':semVal;
+  _openRaporPrintWindow(dosen, myP, myG, myM, semLabel);
+}
+
+function _openRaporPrintWindow(dosen, myP, myG, myM, semLabel) {
+  var html = buildRaporHTML(dosen, myP, myG, myM, semLabel, 'pr-', false);
+  var w = window.open('', '_blank', 'width=800,height=900');
+  w.document.write('<!DOCTYPE html><html lang="id"><head><meta charset="UTF-8"><title>Rapor '+dosen.nama+'</title>'
+    +'<style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;font-size:14px;color:#1a1a1a;background:#fff;padding:24px}@page{size:A4;margin:20mm}.card{border:1px solid #e5e5e3;border-radius:12px;padding:16px;margin-bottom:12px}.empty{color:#aaa;font-size:12px}.sec{font-size:13px;font-weight:600;color:#1a1a1a;margin-bottom:8px}</style>'
+    +'</head><body><div style="max-width:720px;margin:0 auto">'+html+'</div>'
+    +'<script>window.onload=function(){window.print();}<\/script></body></html>');
+  w.document.close();
 }
 
 function cekNotifGanti() { cekNotifMaju(); }
@@ -2989,9 +3181,10 @@ function pg(p,btn){
   document.getElementById('page-'+p).classList.add('active');btn.classList.add('active');
   if(p==='report'){
     var rd=document.getElementById('rd');if(rd){rd.innerHTML='<option value="all">Semua dosen</option>';D.forEach(function(d){var o=document.createElement('option');o.value=d.id;o.textContent=d.nama;rd.appendChild(o);});}
+    fillAdminRaporDropdown();
     renderR();
   }
-  if(p==='rapor'){ renderRapor(); }
+  if(p==='rapor'){ if(!isAdmin) renderRapor(null); }
 }
 document.querySelectorAll('.mo').forEach(function(el){el.addEventListener('click',function(e){if(e.target===this)this.classList.remove('open');});});
 function cm(id){document.getElementById(id).classList.remove('open');}
