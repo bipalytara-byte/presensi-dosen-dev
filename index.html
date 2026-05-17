@@ -194,7 +194,7 @@ tr:last-child td{border-bottom:none}
   </div>
   <div class="login-footer">
     Powered by <b>Skuro Production</b><br>
-    <span class="version-tag">v4.0</span>
+    <span class="version-tag">v3.0</span>
   </div>
 </div>
 
@@ -530,6 +530,18 @@ tr:last-child td{border-bottom:none}
       </select>
     </div>
     <div id="list-riwayat-ganti"><p class="empty">Belum ada data.</p></div>
+  </div>
+
+  <!-- FITUR 8: RIWAYAT JADWAL MAJU PER DOSEN (MONITORING WK I) -->
+  <div class="card" id="card-riwayat-maju">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+      <div class="sec" style="margin-bottom:0">⏩ Riwayat Jadwal Maju</div>
+      <select id="filter-maju-dosen" onchange="renderRiwayatMaju()" style="width:auto;padding:3px 8px;font-size:12px;border-radius:6px">
+        <option value="all">Semua dosen</option>
+      </select>
+    </div>
+    <div style="font-size:12px;color:#888;margin-bottom:10px">Pengajuan pemajuan jam kuliah karena kelas sebelumnya kosong — terpisah dari jadwal pengganti.</div>
+    <div id="list-riwayat-maju"><p class="empty">Belum ada data.</p></div>
   </div>
 
   <!-- FITUR 3: TARGET KEHADIRAN per dosen (di dalam rekap per dosen) -->
@@ -910,20 +922,30 @@ function onJadwal(){
 
   var d = new Date();
   var ymd = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+  var todayStr = d.toLocaleDateString('id-ID',{day:'2-digit',month:'2-digit',year:'numeric'});
+
   var isGantiValid = G.find(function(g){ return g.dosenId === currentUser.id && g.mk === j.mk && g.statusAcc === 'Disetujui' && g.ganti === ymd; });
+  var isMajuValid  = M.find(function(m){ return m.dosenId === currentUser.id && m.mk === j.mk && m.statusAcc === 'Disetujui' && m.tglRaw === ymd; });
 
   if(isGantiValid) {
       var jMulaiOverride = isGantiValid.jam;
-      if(jMulaiOverride.indexOf('-') > -1) {
-          jMulaiOverride = jMulaiOverride.split('-')[0].trim();
-      }
+      if(jMulaiOverride.indexOf('-') > -1) jMulaiOverride = jMulaiOverride.split('-')[0].trim();
       document.getElementById('pjam').value = jStr(jMulaiOverride);
       document.getElementById('pruang').value = isGantiValid.tempat || j.ruang;
       document.getElementById('pmode').value = isGantiValid.mode === 'daring' ? 'Daring Sinkronus' : 'Luring';
-      
       var w=document.getElementById('warn-hari');
       w.className = 'ai';
       w.textContent='ℹ️ Menggunakan Jadwal Pengganti yang telah di-ACC Admin.';
+      w.style.display='block';
+  } else if(isMajuValid) {
+      var jMulaiMaju = isMajuValid.jam;
+      if(jMulaiMaju.indexOf('-') > -1) jMulaiMaju = jMulaiMaju.split('-')[0].trim();
+      document.getElementById('pjam').value = jStr(jMulaiMaju);
+      document.getElementById('pruang').value = isMajuValid.tempat || j.ruang;
+      document.getElementById('pmode').value = isMajuValid.mode === 'daring' ? 'Daring Sinkronus' : 'Luring';
+      var w=document.getElementById('warn-hari');
+      w.className = 'ai';
+      w.innerHTML='⏩ <b>Jadwal Maju</b> digunakan — ACC Admin tgl <b>'+isMajuValid.tgl+'</b> · Jam: <b>'+isMajuValid.jam+'</b>';
       w.style.display='block';
   } else {
       document.getElementById('pjam').value=jStr(j.jamMulai);
@@ -948,8 +970,9 @@ function previewStatus(){
   var d = new Date();
   var ymd = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
   var isGantiValid = G.find(function(g){ return g.dosenId === currentUser.id && g.mk === j.mk && g.statusAcc === 'Disetujui' && g.ganti === ymd; });
+  var isMajuValid  = M.find(function(m){ return m.dosenId === currentUser.id && m.mk === j.mk && m.statusAcc === 'Disetujui' && m.tglRaw === ymd; });
 
-  if(j&&j.hari!==today && !isGantiValid){
+  if(j&&j.hari!==today && !isGantiValid && !isMajuValid){
      el.style.display='block';el.style.background='#fcebeb';el.style.color='#791f1f';el.textContent='❌ Tidak bisa presensi — jadwal hari '+j.hari+', bukan '+today;return;
   }
   
@@ -999,9 +1022,10 @@ async function rekam(){
   var d = new Date();
   var ymd = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
   var isGantiValid = G.find(function(g){ return g.dosenId === currentUser.id && g.mk === jad.mk && g.statusAcc === 'Disetujui' && g.ganti === ymd; });
+  var isMajuValid  = M.find(function(m){ return m.dosenId === currentUser.id && m.mk === jad.mk && m.statusAcc === 'Disetujui' && m.tglRaw === ymd; });
 
-  if(jad.hari!==todayHari() && !isGantiValid){
-    alert('❌ Presensi gagal!\nJadwal "'+jad.mk+'" adalah hari '+jad.hari+'.\nTidak ada pengajuan pengganti yang di-ACC untuk hari ini.');
+  if(jad.hari!==todayHari() && !isGantiValid && !isMajuValid){
+    alert('❌ Presensi gagal!\nJadwal "'+jad.mk+'" adalah hari '+jad.hari+'.\nTidak ada pengajuan pengganti/maju yang di-ACC untuk hari ini.');
     return;
   }
 
@@ -1012,13 +1036,20 @@ async function rekam(){
   var now=new Date(),st=stH(jam);
   var ts=now.toLocaleDateString('id-ID',{day:'2-digit',month:'2-digit',year:'numeric'})+' '+now.toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
   
-  var jamSelesaiAkhir = isGantiValid && isGantiValid.jam.indexOf('-') > -1 ? isGantiValid.jam.split('-')[1].trim() : (isGantiValid ? '' : (jad.jamSelesai||''));
+  // Tentukan jam selesai berdasarkan sumber (ganti/maju/asli)
+  var jamSelesaiAkhir = '';
+  if(isGantiValid && isGantiValid.jam.indexOf('-') > -1) jamSelesaiAkhir = isGantiValid.jam.split('-')[1].trim();
+  else if(isMajuValid && isMajuValid.jam.indexOf('-') > -1) jamSelesaiAkhir = isMajuValid.jam.split('-')[1].trim();
+  else jamSelesaiAkhir = jad.jamSelesai||'';
+
+  // Tandai sumber jadwal di record
+  var sumberJadwal = isGantiValid ? 'Jadwal Pengganti' : (isMajuValid ? 'Jadwal Maju' : 'Jadwal Reguler');
 
   var rec={id:Date.now().toString(),dosenId:currentUser.id,dosen:currentUser.nama,mk:jad.mk,kelas:jad.kelas||'',
     jadwalId:jid,jam:jam,ruang:ruang,waktuHadir:now.toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'}),
     tanggal:todayStr,bulan:now.getMonth()+1,status:st.l,color:st.c,diff:st.d,
     jamSelesaiJadwal:jamSelesaiAkhir,waktuSelesai:'',statusSelesai:'',colorSelesai:'',timestamp:ts,
-    modeKuliah: pmode};
+    modeKuliah: pmode, sumberJadwal: sumberJadwal};
 
   var btn=document.getElementById('brek');btn.disabled=true;btn.textContent='Menyimpan...';
   setSB('sy');
@@ -1082,7 +1113,10 @@ function renderHari(){
   document.getElementById('lhari').innerHTML=data.map(function(p){
     var md = p.modeKuliah || 'Luring';
     var sb=p.waktuSelesai?'<span class="badge '+(p.colorSelesai==='blue'?'green':p.colorSelesai==='red'?'red':'yellow')+'" style="font-size:11px">'+p.statusSelesai+'</span>':'<span style="font-size:11px;color:#aaa">Belum selesai</span>';
-    return '<div class="entry"><div class="em"><div class="en">'+p.dosen+'</div><div class="es">'+p.mk+(p.kelas?' · '+p.kelas:'')+' · '+p.ruang+' <span class="badge mode-badge" style="font-size:10px; margin-left:4px">'+md+'</span></div><div class="es" style="margin-top:4px;display:flex;gap:8px;align-items:center;flex-wrap:wrap"><span>Mulai: <b>'+p.waktuHadir+'</b></span><span class="badge '+p.color+'" style="font-size:11px">'+p.status+'</span>'+(p.waktuSelesai?'<span>Selesai: <b>'+p.waktuSelesai+'</b></span>':'')+sb+'</div></div></div>';
+    var sumberBadge='';
+    if(p.sumberJadwal==='Jadwal Maju') sumberBadge='<span style="display:inline-block;background:#fef3c7;color:#92400e;border:1px solid #fde68a;border-radius:20px;padding:1px 7px;font-size:10px;font-weight:600;margin-left:4px">⏩ Maju</span>';
+    else if(p.sumberJadwal==='Jadwal Pengganti') sumberBadge='<span style="display:inline-block;background:#e6f1fb;color:#185fa5;border:1px solid #85b7eb;border-radius:20px;padding:1px 7px;font-size:10px;font-weight:600;margin-left:4px">🔄 Pengganti</span>';
+    return '<div class="entry"><div class="em"><div class="en">'+p.dosen+'</div><div class="es">'+p.mk+(p.kelas?' · '+p.kelas:'')+' · '+p.ruang+' <span class="badge mode-badge" style="font-size:10px; margin-left:4px">'+md+'</span>'+sumberBadge+'</div><div class="es" style="margin-top:4px;display:flex;gap:8px;align-items:center;flex-wrap:wrap"><span>Mulai: <b>'+p.waktuHadir+'</b></span><span class="badge '+p.color+'" style="font-size:11px">'+p.status+'</span>'+(p.waktuSelesai?'<span>Selesai: <b>'+p.waktuSelesai+'</b></span>':'')+sb+'</div></div></div>';
   }).join('');
 }
 
@@ -1804,9 +1838,10 @@ function renderR(){
   // Fitur 1 & 2: selalu render berdasarkan data real-time (bukan filter tanggal)
   renderDailyDashboard();
   renderAlertAbsen();
-  // Fitur 4, 5, 6, 7: render dengan data filtered
+  // Fitur 4, 5, 6, 7, 8: render dengan data filtered
   renderGantiAlert();
   renderRiwayatGanti();
+  renderRiwayatMaju();
   renderTren();
 
   var start=document.getElementById('r-start').value;
@@ -1886,9 +1921,10 @@ function renderR(){
     var dd=data.filter(function(p){return p.dosenId===d.id;});
     var jd=J.filter(function(j){return j.dosenId===d.id;});
     var dg=gf.filter(function(g){return g.dosenId===d.id && g.statusAcc==='Disetujui';});
+    var dm2=mf2.filter(function(m){return m.dosenId===d.id && m.statusAcc==='Disetujui';});
 
-    var totJadwal=jd.length, totPresensi=dd.length, totGanti=dg.length;
-    if(totJadwal===0&&totPresensi===0&&totGanti===0) return '';
+    var totJadwal=jd.length, totPresensi=dd.length, totGanti=dg.length, totMaju=dm2.length;
+    if(totJadwal===0&&totPresensi===0&&totGanti===0&&totMaju===0) return '';
 
     var hasJadwalInRange=jd.filter(function(j){return daysInRange.indexOf(j.hari)>-1;}).length>0;
     var dh=dd.filter(function(p){return p.color==='green';}).length;
@@ -1939,7 +1975,8 @@ function renderR(){
       +'<div style="background:#f5f5f3;border-radius:5px;padding:4px 6px;font-size:10px;color:#555">🏫 Luring<br><b style="color:#1a1a1a">'+dml+'x ('+pLuring+'%)</b></div>'
       +'<div style="background:#f5f5f3;border-radius:5px;padding:4px 6px;font-size:10px;color:#555">💻 Sinkronus<br><b style="color:#1a1a1a">'+dms+'x ('+pSinkron+'%)</b></div>'
       +'<div style="background:#f5f5f3;border-radius:5px;padding:4px 6px;font-size:10px;color:#555">📝 Asinkronus<br><b style="color:#1a1a1a">'+dma+'x ('+pAsinkron+'%)</b></div>'
-      +'<div style="background:#f5f5f3;border-radius:5px;padding:4px 6px;font-size:10px;color:#555">🔄 Ganti Jadwal<br><b style="color:#1a1a1a">'+totGanti+'x ('+pGanti+'%)</b></div>'
+      +'<div style="background:#f5f5f3;border-radius:5px;padding:4px 6px;font-size:10px;color:#555">🔄 Ganti Jadwal<br><b style="color:#1a1a1a">'+totGanti+'x</b></div>'
+      +(totMaju>0?'<div style="background:#fefce8;border:1px solid #fde68a;border-radius:5px;padding:4px 6px;font-size:10px;color:#92400e;grid-column:span 2">⏩ Jadwal Maju (ACC)<br><b style="color:#92400e">'+totMaju+'x pemajuan jam</b></div>':'')
       +'</div>';
 
     // FITUR 3: Target Kehadiran — hitung estimasi total sesi dari jadwal di rentang tanggal
@@ -2070,6 +2107,7 @@ function renderR(){
             +'<span style="font-size:10px;color:#888">Hadir: <b style="color:#1a1a1a">'+p.waktuHadir+'</b></span>'
             +'<span style="font-size:10px;font-weight:600;padding:1px 7px;border-radius:20px;background:'+hadirBg+';color:'+hadirTx+'">'+p.status+(p.diff>0?' +'+p.diff+'mnt':'')+'</span>'
             +'<span style="font-size:10px;font-weight:500;padding:1px 7px;border-radius:20px;background:'+modeBg+';color:'+modeTx+'">'+md+'</span>'
+            +(p.sumberJadwal==='Jadwal Maju'?'<span style="font-size:10px;font-weight:600;padding:1px 7px;border-radius:20px;background:#fef3c7;color:#92400e;border:1px solid #fde68a">⏩ Maju</span>':p.sumberJadwal==='Jadwal Pengganti'?'<span style="font-size:10px;font-weight:600;padding:1px 7px;border-radius:20px;background:#e6f1fb;color:#185fa5;border:1px solid #85b7eb">🔄 Pengganti</span>':'')
           +'</div>'
           + selesaiHtml
           +'</div>';
@@ -2315,16 +2353,93 @@ async function setStatusMaju(id, status) {
     alasan = prompt('Masukkan alasan penolakan (opsional):');
     if (alasan === null) return;
   } else {
-    if (!confirm('Setujui pengajuan jadwal maju ini?')) return;
+    if (!confirm('Setujui pengajuan jadwal maju ini?\nDosen akan diizinkan presensi lebih awal pada tanggal tersebut.')) return;
   }
   setSB('sy');
   try {
     await post({action:'updateStatusMaju', id:id, status:status, alasan:alasan});
     var idx = M.findIndex(function(m){return m.id === id;});
     if (idx > -1) { M[idx].statusAcc = status; M[idx].alasanTolak = alasan; }
-    setSB('ok'); renderM();
+    setSB('ok'); renderM(); renderRiwayatMaju();
     cekNotifMaju();
   } catch(e) { setSB('er'); alert('Gagal: ' + e.message); }
+}
+
+function promptTolakMaju(id) {
+  var alasan = prompt('Masukkan alasan penolakan jadwal maju:');
+  if(alasan === null) return;
+  setStatusMaju(id, 'Ditolak');
+}
+
+// =====================================================
+// MONITORING: RIWAYAT JADWAL MAJU PER DOSEN (WK I)
+// =====================================================
+function renderRiwayatMaju() {
+  var card = document.getElementById('card-riwayat-maju');
+  if(!card) return;
+  if(!isAdmin){ card.style.display='none'; return; }
+  card.style.display='block';
+
+  // Isi dropdown filter dosen
+  var sel = document.getElementById('filter-maju-dosen');
+  if(sel && sel.options.length <= 1){
+    D.forEach(function(d){ var o=document.createElement('option');o.value=d.id;o.textContent=d.nama;sel.appendChild(o); });
+  }
+
+  var df = sel ? sel.value : 'all';
+  var majuData = df==='all' ? M.slice() : M.filter(function(m){ return m.dosenId===df; });
+  majuData = majuData.slice().reverse();
+
+  var el = document.getElementById('list-riwayat-maju');
+  if(majuData.length===0){ el.innerHTML='<p class="empty">Belum ada pengajuan jadwal maju.</p>'; return; }
+
+  var AVATAR_PAL8=['#185fa5','#639922','#7c3aed','#c2410c','#0f766e','#b45309','#be123c','#1d4ed8'];
+  function aC8(n){var c=0;for(var i=0;i<n.length;i++)c+=n.charCodeAt(i);return AVATAR_PAL8[c%AVATAR_PAL8.length];}
+  function aI8(n){var p=n.trim().split(' ').filter(Boolean);return p.length===1?p[0].substring(0,2).toUpperCase():(p[0][0]+p[p.length-1][0]).toUpperCase();}
+
+  el.innerHTML = majuData.map(function(m){
+    var statusBg = m.statusAcc==='Disetujui'?'#fef3c7':m.statusAcc==='Ditolak'?'#fcebeb':'#faeeda';
+    var statusTx = m.statusAcc==='Disetujui'?'#92400e':m.statusAcc==='Ditolak'?'#791f1f':'#633806';
+    var statusIcon = m.statusAcc==='Disetujui'?'⏩':m.statusAcc==='Ditolak'?'❌':'⏳';
+    var ac=aC8(m.dosen), ini=aI8(m.dosen);
+    var modeLabel = m.mode==='daring'?'Daring':'Luring';
+
+    return '<div class="ganti-card">'
+      +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">'
+        +'<div style="display:flex;align-items:center;gap:8px">'
+          +'<div style="width:30px;height:30px;border-radius:50%;background:'+ac+';color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0">'+ini+'</div>'
+          +'<div>'
+            +'<div style="font-size:13px;font-weight:600;color:#1a1a1a">'+m.dosen+'</div>'
+            +'<div style="font-size:10px;color:#888">'+m.mk+' · Diajukan: '+m.diajukan+'</div>'
+          +'</div>'
+        +'</div>'
+        +'<span class="ganti-status" style="background:'+statusBg+';color:'+statusTx+'">'+statusIcon+' '+m.statusAcc+'</span>'
+      +'</div>'
+      +'<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:6px">'
+        +'<div style="background:#fefce8;border:1px solid #fde68a;border-radius:6px;padding:5px 8px">'
+          +'<div style="font-size:9px;color:#92400e;text-transform:uppercase;font-weight:600">Tanggal Maju</div>'
+          +'<div style="font-size:11px;font-weight:700;color:#1a1a1a">'+m.tgl+'</div>'
+        +'</div>'
+        +'<div style="background:#f8f8f7;border-radius:6px;padding:5px 8px">'
+          +'<div style="font-size:9px;color:#aaa;text-transform:uppercase">Jam Baru</div>'
+          +'<div style="font-size:11px;font-weight:600;color:#1a1a1a">'+m.jam+'</div>'
+        +'</div>'
+        +'<div style="background:#f8f8f7;border-radius:6px;padding:5px 8px">'
+          +'<div style="font-size:9px;color:#aaa;text-transform:uppercase">Mode</div>'
+          +'<div style="font-size:11px;font-weight:600;color:#1a1a1a">'+modeLabel+(m.tempat?' · '+m.tempat:'')+' </div>'
+        +'</div>'
+      +'</div>'
+      +(m.ket?'<div style="font-size:11px;color:#555;margin-bottom:4px">📝 '+m.ket+'</div>':'')
+      +(m.alasanTolak?'<div style="font-size:11px;color:#a32d2d;padding:4px 8px;background:#fcebeb;border-radius:6px;margin-bottom:4px">❌ Alasan ditolak: '+m.alasanTolak+'</div>':'')
+      +(m.bukti?'<div style="margin-bottom:4px"><a href="'+m.bukti+'" target="_blank" style="font-size:11px;color:#185fa5;text-decoration:none">🔗 Lihat bukti</a></div>':'')
+      +(isAdmin && m.statusAcc==='Menunggu'
+        ? '<div style="display:flex;gap:6px;margin-top:8px">'
+            +'<button class="btn btn-sm" style="background:#fef3c7;color:#92400e;border-color:#fde68a;font-size:11px" onclick="setStatusMaju(\''+m.id+'\',\'Disetujui\')">⏩ Setujui Maju</button>'
+            +'<button class="btn btn-sm btn-danger" style="font-size:11px" onclick="promptTolakMaju(\''+m.id+'\')">❌ Tolak</button>'
+          +'</div>'
+        : '')
+      +'</div>';
+  }).join('');
 }
 
 function renderM(){
@@ -2335,23 +2450,59 @@ function renderM(){
   
   if(!data.length){if(w)w.style.display='none';return;}
   w.style.display='block';
+
+  var AVATAR_PAL7=['#185fa5','#639922','#7c3aed','#c2410c','#0f766e','#b45309','#be123c','#1d4ed8'];
+  function aC7(n){var c=0;for(var i=0;i<n.length;i++)c+=n.charCodeAt(i);return AVATAR_PAL7[c%AVATAR_PAL7.length];}
+  function aI7(n){var p=n.trim().split(' ').filter(Boolean);return p.length===1?p[0].substring(0,2).toUpperCase():(p[0][0]+p[p.length-1][0]).toUpperCase();}
   
   el.innerHTML=data.slice().reverse().map(function(m){
-    var stBadge = m.statusAcc === 'Disetujui' ? '<span class="badge green">Disetujui</span>' :
-                  m.statusAcc === 'Ditolak' ? '<span class="badge red">Ditolak</span>' :
-                  '<span class="badge yellow">Menunggu ACC</span>';
-    var typeBadge = '<span style="display:inline-block;background:#fef3c7;color:#92400e;border:1px solid #fde68a;border-radius:20px;padding:2px 8px;font-size:11px;font-weight:600;margin-left:6px">⏩ Jadwal Maju</span>';
+    var statusBg = m.statusAcc==='Disetujui'?'#fef3c7':m.statusAcc==='Ditolak'?'#fcebeb':'#faeeda';
+    var statusTx = m.statusAcc==='Disetujui'?'#92400e':m.statusAcc==='Ditolak'?'#791f1f':'#633806';
+    var statusIcon = m.statusAcc==='Disetujui'?'⏩':m.statusAcc==='Ditolak'?'❌':'⏳';
+    var ac=aC7(m.dosen), ini=aI7(m.dosen);
+    var modeLabel = m.mode === 'daring' ? 'Daring' : 'Luring';
 
     var btnAdmin = '';
     if(isAdmin && m.statusAcc === 'Menunggu') {
-       btnAdmin = '<div style="margin-top:10px;padding-top:10px;border-top:1px dashed #e5e5e3;display:flex;gap:8px"><button class="btn btn-sm btn-primary" onclick="setStatusMaju(\''+m.id+'\', \'Disetujui\')">Setujui</button><button class="btn btn-sm btn-danger" onclick="setStatusMaju(\''+m.id+'\', \'Ditolak\')">Tolak</button></div>';
+      btnAdmin = '<div style="display:flex;gap:6px;margin-top:8px">'
+        +'<button class="btn btn-sm" style="background:#fef3c7;color:#92400e;border-color:#fde68a;font-size:11px" onclick="setStatusMaju(\''+m.id+'\',\'Disetujui\')">⏩ Setujui Maju</button>'
+        +'<button class="btn btn-sm btn-danger" style="font-size:11px" onclick="promptTolakMaju(\''+m.id+'\')">❌ Tolak</button>'
+        +'</div>';
     }
 
-    var buktiLink = m.bukti ? '<br><a href="'+m.bukti+'" target="_blank" style="color:#185fa5;text-decoration:none;font-weight:500">Lihat Lampiran ↗</a>' : '';
-    var tolakMsg = m.statusAcc === 'Ditolak' && m.alasanTolak ? '<div style="margin-top:4px;font-size:12px;color:#a32d2d;background:#fcebeb;padding:4px 8px;border-radius:4px">Alasan: '+m.alasanTolak+'</div>' : '';
-    var modeLabel = m.mode === 'daring' ? 'Daring' : 'Luring';
-
-    return '<div class="entry"><div class="em"><div class="en" style="display:flex;justify-content:space-between;align-items:flex-start"><span>'+m.mk+typeBadge+'<br><span style="font-size:12px;color:#888;font-weight:normal">'+m.dosen+'</span></span> '+stBadge+'</div><div class="es">Tanggal: <b>'+m.tgl+'</b> · Jam: <b>'+m.jam+'</b> · <b>'+modeLabel+'</b>'+(m.tempat?' · '+m.tempat:'')+buktiLink+'</div>'+(m.ket?'<div class="es" style="color:#666">Ket: '+m.ket+'</div>':'')+tolakMsg+btnAdmin+'</div></div>';
+    return '<div class="ganti-card">'
+      // header dosen
+      +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">'
+        +'<div style="display:flex;align-items:center;gap:8px">'
+          +'<div style="width:30px;height:30px;border-radius:50%;background:'+ac+';color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0">'+ini+'</div>'
+          +'<div>'
+            +'<div style="font-size:13px;font-weight:600;color:#1a1a1a">'+m.dosen+'</div>'
+            +'<div style="font-size:10px;color:#888">'+m.mk+' · Diajukan: '+m.diajukan+'</div>'
+          +'</div>'
+        +'</div>'
+        +'<span class="ganti-status" style="background:'+statusBg+';color:'+statusTx+'">'+statusIcon+' '+m.statusAcc+'</span>'
+      +'</div>'
+      // info grid
+      +'<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:6px">'
+        +'<div style="background:#fefce8;border-radius:6px;padding:5px 8px;border:1px solid #fde68a">'
+          +'<div style="font-size:9px;color:#92400e;text-transform:uppercase;font-weight:600">Tanggal Maju</div>'
+          +'<div style="font-size:11px;font-weight:700;color:#1a1a1a">'+m.tgl+'</div>'
+        +'</div>'
+        +'<div style="background:#f8f8f7;border-radius:6px;padding:5px 8px">'
+          +'<div style="font-size:9px;color:#aaa;text-transform:uppercase">Jam Baru</div>'
+          +'<div style="font-size:11px;font-weight:600;color:#1a1a1a">'+m.jam+'</div>'
+        +'</div>'
+        +'<div style="background:#f8f8f7;border-radius:6px;padding:5px 8px">'
+          +'<div style="font-size:9px;color:#aaa;text-transform:uppercase">Mode · Tempat</div>'
+          +'<div style="font-size:11px;font-weight:600;color:#1a1a1a">'+modeLabel+(m.tempat?' · '+m.tempat:'')+' </div>'
+        +'</div>'
+      +'</div>'
+      // keterangan
+      +(m.ket?'<div style="font-size:11px;color:#555;margin-bottom:4px">📝 '+m.ket+'</div>':'')
+      +(m.alasanTolak?'<div style="font-size:11px;color:#a32d2d;padding:4px 8px;background:#fcebeb;border-radius:6px;margin-bottom:4px">❌ Alasan ditolak: '+m.alasanTolak+'</div>':'')
+      +(m.bukti?'<div style="margin-bottom:4px"><a href="'+m.bukti+'" target="_blank" style="font-size:11px;color:#185fa5;text-decoration:none">🔗 Lihat bukti/kesepakatan</a></div>':'')
+      + btnAdmin
+      +'</div>';
   }).join('');
 }
 
@@ -2418,6 +2569,7 @@ function fillAll(){
   renderAlertAbsen();
   renderGantiAlert();
   renderRiwayatGanti();
+  renderRiwayatMaju();
   renderTren();
 }
 
