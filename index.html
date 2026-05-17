@@ -225,7 +225,7 @@ tr:last-child td{border-bottom:none}
   <button class="tab" id="tab-ganti" onclick="pg('ganti',this)">Jadwal Pengganti</button>
   <button class="tab" id="tab-maju" onclick="pg('maju',this)">Jadwal Maju</button>
   <button class="tab" id="tab-riwayat" onclick="pg('riwayat',this)">Riwayat Saya</button>
-  <button class="tab" id="tab-rapor" onclick="pg('rapor',this)">📊 Rapor Saya</button>
+  <button class="tab" id="tab-rapor" onclick="pg('rapor',this)" style="display:none">📊 Rapor Saya</button>
   <button class="tab" id="tab-report" onclick="pg('report',this)" style="display:none">Laporan Dashboard</button>
   <button class="tab" id="tab-dosen" onclick="pg('dosen',this)" style="display:none">Kelola Dosen</button>
   <button class="tab" id="tab-jadwal" onclick="pg('jadwal',this)" style="display:none">Kelola Jadwal</button>
@@ -907,7 +907,7 @@ async function loadThenShow(){
   try{
     var r=await Promise.all([get({action:'getDosen'}),get({action:'getJadwal'}),get({action:'getPresensi'}),get({action:'getGanti'}),get({action:'getMaju'})]);
     D=r[0].data||[];J=r[1].data||[];P=r[2].data||[];G=r[3].data||[];M=r[4].data||[];
-    setSB('ok');updateUserUI();fillAll();restoreSesi();
+    setSB('ok');fillAll();restoreSesi();
   }catch(e){setSB('er');}
 }
 
@@ -2967,12 +2967,12 @@ function renderRapor() {
 function cekNotifGanti() { cekNotifMaju(); }
 
 function fillAll(){
+  updateUserUI();
   fillJadwalDosen();
   var rd=document.getElementById('rd');if(rd){rd.innerHTML='<option value="all">Semua dosen</option>';D.forEach(function(d){var o=document.createElement('option');o.value=d.id;o.textContent=d.nama;rd.appendChild(o);});}
   var jfd=document.getElementById('jfd');if(jfd){jfd.innerHTML='<option value="all">Semua dosen</option>';D.forEach(function(d){var o=document.createElement('option');o.value=d.id;o.textContent=d.nama;jfd.appendChild(o);});}
   renderD();renderJ();renderHari();renderG();renderM();
   renderRiwayatSaya();
-  updateUserUI();
   cekNotifGanti();
   // Fitur monitoring: render setelah data siap
   renderDailyDashboard();
