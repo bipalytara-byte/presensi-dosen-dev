@@ -434,6 +434,31 @@ function restoreSesi(){
   var todayStr=new Date().toLocaleDateString('id-ID');
   var todayTs=parseTanggal(todayStr);
   var sg=P.find(function(p){return parseTanggal(p.tanggal)===todayTs&&p.dosenId===currentUser.id&&(!p.waktuSelesai||p.waktuSelesai==='');});
+
+  // [V12.2] Sesi tertinggal dari hari SEBELUMNYA. Versi lama hanya
+  // memeriksa hari ini, sehingga sesi yang lupa ditutup kemarin tidak
+  // muncul di mana pun — dan itu penyebab utama sesi menggantung.
+  if(!sg){
+    var tertinggal = P.filter(function(p){
+      return p.dosenId===currentUser.id && (!p.waktuSelesai||p.waktuSelesai==='')
+             && parseTanggal(p.tanggal) < todayTs;
+    }).sort(function(x,y){ return parseTanggal(y.tanggal)-parseTanggal(x.tanggal); });
+    if(tertinggal.length){
+      var t=tertinggal[0];
+      actId=t.id; actJad=J.find(function(j){return j.id===t.jadwalId;});
+      var b2=document.getElementById('resume-banner');
+      document.getElementById('resume-title').textContent =
+        'Sesi ' + t.tanggal + ' belum direkam selesai'
+        + (tertinggal.length>1 ? ' (dan ' + (tertinggal.length-1) + ' sesi lain)' : '');
+      document.getElementById('resume-info').textContent =
+        t.mk + (t.kelas?' ('+t.kelas+')':'') + ' · Mulai ' + t.waktuHadir
+        + ' · Akan ditutup otomatis oleh sistem bila dibiarkan';
+      b2.style.display='flex';
+      tampilKartuSelesai(t, actJad);
+      return;
+    }
+  }
+
   if(sg){
     actId=sg.id;actJad=J.find(function(j){return j.id===sg.jadwalId;});
     var banner=document.getElementById('resume-banner');

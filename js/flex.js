@@ -97,7 +97,10 @@ function statusBlok(b) {
     return { label:'Sedang berjalan', warna:'#633806', bg:'#faeeda',
              detail:'mulai ' + p.waktuHadir + ' · ' + (p.status || '') + ' — belum rekam selesai' };
   }
-  return { label:'Terlaksana', warna:'#27500a', bg:'#eaf3de',
+  var otomatis = String(p.statusSelesai || '').indexOf('otomatis') > -1;
+  return { label: otomatis ? 'Terlaksana (tutup otomatis)' : 'Terlaksana',
+           warna: otomatis ? '#633806' : '#27500a',
+           bg:    otomatis ? '#faeeda' : '#eaf3de',
            detail:p.waktuHadir + '–' + p.waktuSelesai + ' · ' + (p.status || '')
                   + (p.statusSelesai ? ' · ' + p.statusSelesai : '') };
 }
@@ -188,7 +191,7 @@ function kartuJadwalFlex(j) {
     + '<div style="font-size:11px;color:#888;margin-bottom:10px">'
       + (j.kelas ? 'Kelas ' + j.kelas + ' · ' : '') + 'Target ' + j.maxPertemuan + ' pertemuan · '
       + 'Ditetapkan ' + blok.length + ' · Terlaksana '
-      + blok.filter(function(x){ return statusBlok(x).label === 'Terlaksana'; }).length + '</div>'
+      + blok.filter(function(x){ return statusBlok(x).label.indexOf('Terlaksana') === 0; }).length + '</div>'
 
     + (tertinggal.length
       ? '<div style="background:#fcebeb;color:#791f1f;border-radius:8px;padding:7px 10px;font-size:11px;margin-bottom:10px">'
@@ -465,7 +468,7 @@ function renderFlexAdmin(el) {
       + '<label style="font-size:12px;font-weight:600;color:#555;display:block;margin-bottom:5px">Filter status pelaksanaan</label>'
       + '<select id="flex-filter-status" onchange="renderFlex()" '
       + 'style="width:100%;border:1px solid #ddd;border-radius:8px;padding:8px 10px;font-size:13px;font-family:inherit">'
-      + ['all','Terlaksana','Sedang berjalan','Belum direkam','Tidak direkam','Terjadwal'].map(function(s){
+      + ['all','Terlaksana','Terlaksana (tutup otomatis)','Sedang berjalan','Belum direkam','Tidak direkam','Terjadwal'].map(function(s){
           return '<option value="'+s+'"'+(fStatus===s?' selected':'')+'>'
                + (s==='all'?'Semua status':s) + '</option>'; }).join('')
       + '</select>'
@@ -483,7 +486,7 @@ function kartuFlexAdmin(j, fStatus) {
   var komp = blok.filter(function(b){ return b.modaSumbuA === 'Kompensasi Asinkronus'; }).length;
   var blokTampil = (!fStatus || fStatus === 'all')
     ? blok : blok.filter(function(b){ return statusBlok(b).label === fStatus; });
-  var terlaksana = blok.filter(function(b){ return statusBlok(b).label === 'Terlaksana'; }).length;
+  var terlaksana = blok.filter(function(b){ return statusBlok(b).label.indexOf('Terlaksana') === 0; }).length;
   var alpa       = blok.filter(function(b){ return statusBlok(b).label === 'Tidak direkam'; }).length;
   var mb = mingguBerjalan();
   var hariIni = new Date(); hariIni.setHours(0,0,0,0);
