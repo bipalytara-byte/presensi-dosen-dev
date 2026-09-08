@@ -8,7 +8,7 @@ const API = 'https://script.google.com/macros/s/AKfycbxGKxl4M9NdTNZTJu1xSvdDulR0
 // Versi backend yang diharapkan. Kalau server menjawab dengan versi
 // lain, berarti URL /exec menunjuk deployment lama — penyebab paling
 // sering dari "action tidak dikenal" dan "data lama muncul lagi".
-const VERSI_DIHARAPKAN = 'V12.0';
+const VERSI_DIHARAPKAN = 'V12.1';
 const HARI = ['Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
 let D=[],J=[],P=[],G=[],M=[],MK=[];
 let eDos=null,eJad=null,eMk=null,tempMk=[];

@@ -63,6 +63,51 @@ function jadwalFlexSaya() {
   });
 }
 
+
+// =====================================================
+// [V12.1] STATUS PELAKSANAAN BLOK
+// Mencocokkan blok dengan data presensi, supaya kartu Flex Class
+// menunjukkan bukan hanya rencana, tetapi juga realisasinya.
+// =====================================================
+function _ymdKeId(ymd) {
+  var p = String(ymd || '').split('-');
+  return p.length === 3 ? p[2] + '/' + p[1] + '/' + p[0] : '';
+}
+
+function presensiBlok(b) {
+  var tglId = _ymdKeId(b.tanggal);
+  return P.find(function(p){
+    return p.jadwalId === b.jadwalId && p.tanggal === tglId;
+  }) || null;
+}
+
+// Kembalikan { label, warna, bg, detail } untuk sebuah blok.
+function statusBlok(b) {
+  var p = presensiBlok(b);
+  var hariIni = new Date(); hariIni.setHours(0,0,0,0);
+  var tglBlok = new Date(b.tanggal + 'T00:00:00');
+
+  if (!p) {
+    if (tglBlok > hariIni) return { label:'Terjadwal', warna:'#185fa5', bg:'#e6f1fb', detail:'' };
+    if (tglBlok.getTime() === hariIni.getTime())
+      return { label:'Belum direkam', warna:'#633806', bg:'#faeeda', detail:'hari ini' };
+    return { label:'Tidak direkam', warna:'#791f1f', bg:'#fcebeb', detail:'sudah lewat' };
+  }
+  if (!p.waktuSelesai) {
+    return { label:'Sedang berjalan', warna:'#633806', bg:'#faeeda',
+             detail:'mulai ' + p.waktuHadir + ' · ' + (p.status || '') + ' — belum rekam selesai' };
+  }
+  return { label:'Terlaksana', warna:'#27500a', bg:'#eaf3de',
+           detail:p.waktuHadir + '–' + p.waktuSelesai + ' · ' + (p.status || '')
+                  + (p.statusSelesai ? ' · ' + p.statusSelesai : '') };
+}
+
+function _lencana(s) {
+  return '<span style="display:inline-block;background:' + s.bg + ';color:' + s.warna
+    + ';border-radius:20px;padding:2px 9px;font-size:10px;font-weight:700;white-space:nowrap">'
+    + s.label + '</span>';
+}
+
 // =====================================================
 // HALAMAN FLEX CLASS (dosen)
 // =====================================================
@@ -105,6 +150,8 @@ function kartuJadwalFlex(j) {
 
   var daftar = blok.length ? blok.map(function(b){
     var lewat = new Date(b.tanggal + 'T00:00:00') < hariIni;
+    var st = statusBlok(b);
+    var stA = statusBlok(b);
     var isUjian = MODA_UJIAN.indexOf(b.modaSumbuA) > -1;
     var warna = isUjian ? '#e6f1fb' : b.modaSumbuA === 'Kompensasi Asinkronus' ? '#faeeda' : '#eaf3de';
     var tx    = isUjian ? '#185fa5' : b.modaSumbuA === 'Kompensasi Asinkronus' ? '#633806' : '#27500a';
@@ -115,6 +162,9 @@ function kartuJadwalFlex(j) {
             + (isUjian ? '📝 ' : '') + 'Minggu ' + b.minggu
             + ' · ' + b.tanggal + ' · ' + b.jamMulai + '–' + b.jamSelesai + '</div>'
           + '<div style="font-size:11px;color:#555;margin-top:2px">' + b.modaSumbuA + ' · ' + b.metodeSumbuB + '</div>'
+          + '<div style="margin-top:5px">' + _lencana(st)
+            + (st.detail ? '<span style="font-size:10px;color:#555;margin-left:6px">' + st.detail + '</span>' : '')
+          + '</div>'
           + (b.direvisiOleh ? '<div style="font-size:10px;color:#a32d2d;margin-top:2px">✏️ Direvisi ' + b.direvisiOleh + ' · ' + b.direvisiPada + '</div>' : '')
         + '</div>'
         + (lewat
@@ -137,7 +187,8 @@ function kartuJadwalFlex(j) {
     + '<div style="font-size:14px;font-weight:700;color:#1a1a1a">' + j.mk + '</div>'
     + '<div style="font-size:11px;color:#888;margin-bottom:10px">'
       + (j.kelas ? 'Kelas ' + j.kelas + ' · ' : '') + 'Target ' + j.maxPertemuan + ' pertemuan · '
-      + 'Sudah ditetapkan ' + blok.length + '</div>'
+      + 'Ditetapkan ' + blok.length + ' · Terlaksana '
+      + blok.filter(function(x){ return statusBlok(x).label === 'Terlaksana'; }).length + '</div>'
 
     + (tertinggal.length
       ? '<div style="background:#fcebeb;color:#791f1f;border-radius:8px;padding:7px 10px;font-size:11px;margin-bottom:10px">'
@@ -403,24 +454,37 @@ function renderFlexAdmin(el) {
 
   var tampil = pilih === 'all' ? semua : semua.filter(function(j){ return j.dosenId === pilih; });
   var mb = mingguBerjalan();
+  var fsEl = document.getElementById('flex-filter-status');
+  var fStatus = fsEl ? fsEl.value : 'all';
 
   el.innerHTML = '<div class="card" style="margin-bottom:14px">'
       + '<label style="font-size:12px;font-weight:600;color:#555;display:block;margin-bottom:5px">Filter dosen</label>'
       + '<select id="flex-filter-dosen" onchange="renderFlex()" '
-      + 'style="width:100%;border:1px solid #ddd;border-radius:8px;padding:8px 10px;font-size:13px;font-family:inherit">'
+      + 'style="width:100%;border:1px solid #ddd;border-radius:8px;padding:8px 10px;font-size:13px;font-family:inherit;margin-bottom:10px">'
       + opsi + '</select>'
+      + '<label style="font-size:12px;font-weight:600;color:#555;display:block;margin-bottom:5px">Filter status pelaksanaan</label>'
+      + '<select id="flex-filter-status" onchange="renderFlex()" '
+      + 'style="width:100%;border:1px solid #ddd;border-radius:8px;padding:8px 10px;font-size:13px;font-family:inherit">'
+      + ['all','Terlaksana','Sedang berjalan','Belum direkam','Tidak direkam','Terjadwal'].map(function(s){
+          return '<option value="'+s+'"'+(fStatus===s?' selected':'')+'>'
+               + (s==='all'?'Semua status':s) + '</option>'; }).join('')
+      + '</select>'
       + '<div style="font-size:11px;color:#888;margin-top:8px">'
         + 'Minggu berjalan: <b>' + mb + '</b> · ' + tampil.length + ' kelas ditampilkan. '
         + 'Sebagai admin, Anda bisa mengubah blok yang sudah terkunci — perubahan tercatat.</div>'
     + '</div>'
-    + tampil.map(kartuFlexAdmin).join('');
+    + tampil.map(function(j){ return kartuFlexAdmin(j, fStatus); }).join('');
 }
 
-function kartuFlexAdmin(j) {
+function kartuFlexAdmin(j, fStatus) {
   var dosen = D.find(function(x){ return x.id === j.dosenId; });
   var blok = FLEX_BLOK.filter(function(b){ return b.jadwalId === j.id && b.status !== 'batal'; })
                       .sort(function(a,b){ return a.minggu - b.minggu; });
   var komp = blok.filter(function(b){ return b.modaSumbuA === 'Kompensasi Asinkronus'; }).length;
+  var blokTampil = (!fStatus || fStatus === 'all')
+    ? blok : blok.filter(function(b){ return statusBlok(b).label === fStatus; });
+  var terlaksana = blok.filter(function(b){ return statusBlok(b).label === 'Terlaksana'; }).length;
+  var alpa       = blok.filter(function(b){ return statusBlok(b).label === 'Tidak direkam'; }).length;
   var mb = mingguBerjalan();
   var hariIni = new Date(); hariIni.setHours(0,0,0,0);
 
@@ -440,6 +504,9 @@ function kartuFlexAdmin(j) {
             + ' · ' + b.tanggal + ' · ' + b.jamMulai + '–' + b.jamSelesai
             + (lewat ? ' <span style="font-size:10px;color:#888;font-weight:400">(terkunci)</span>' : '') + '</div>'
           + '<div style="font-size:11px;color:#555;margin-top:2px">' + b.modaSumbuA + ' · ' + b.metodeSumbuB + '</div>'
+          + '<div style="margin-top:5px">' + _lencana(stA)
+            + (stA.detail ? '<span style="font-size:10px;color:#555;margin-left:6px">' + stA.detail + '</span>' : '')
+          + '</div>'
           + (b.direvisiOleh ? '<div style="font-size:10px;color:#a32d2d;margin-top:2px">✏️ Direvisi ' + b.direvisiOleh + ' · ' + b.direvisiPada + '</div>' : '')
         + '</div>'
         + '<div style="display:flex;gap:4px;flex-shrink:0">'
@@ -447,13 +514,16 @@ function kartuFlexAdmin(j) {
           + '<button class="btn btn-danger btn-sm" style="font-size:10px" onclick="hapusBlokFlex(\'' + b.id + '\')">Hapus</button>'
         + '</div>'
       + '</div></div>';
-  }).join('') : '<p class="empty" style="font-size:12px">Belum ada blok ditetapkan.</p>';
+  }).join('') : '<p class="empty" style="font-size:12px">'
+    + (blok.length ? 'Tidak ada blok dengan status tersebut.' : 'Belum ada blok ditetapkan.') + '</p>';
 
   return '<div class="card" style="margin-bottom:14px">'
     + '<div style="font-size:11px;color:#888">' + (dosen ? dosen.nama : j.dosenId) + '</div>'
     + '<div style="font-size:14px;font-weight:700;color:#1a1a1a">' + j.mk + '</div>'
     + '<div style="font-size:11px;color:#888;margin-bottom:10px">'
       + (j.kelas ? 'Kelas ' + j.kelas + ' · ' : '') + blok.length + ' dari ' + j.maxPertemuan + ' blok'
+      + ' · Terlaksana ' + terlaksana
+      + (alpa ? ' · <b style="color:#a32d2d">Tidak direkam ' + alpa + '</b>' : '')
       + ' · Kompensasi ' + komp + '/' + MAKS_KOMPENSASI + '</div>'
     + (belum.length
       ? '<div style="background:#fcebeb;color:#791f1f;border-radius:8px;padding:7px 10px;font-size:11px;margin-bottom:10px">'
